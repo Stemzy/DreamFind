@@ -457,6 +457,17 @@
   .card:hover { transform: none; background: #0a0a0a !important; border-color: #fff !important; }
   .card-body::before, .card-body::after { display: none; }  /* drop cyber brackets */
 
+  /* faint thumbnail behind each tile */
+  .card-photo {
+    position: absolute; inset: 0; z-index: 0; pointer-events: none;
+    background-size: cover; background-position: center;
+    opacity: 0; filter: grayscale(1) contrast(1.05) brightness(.85);
+    transition: opacity .4s ease;
+  }
+  .card-photo.on { opacity: .34; }
+  .card:hover .card-photo.on { opacity: .5; }
+  .card-top-bar, .card-body { position: relative; z-index: 1; }
+
   /* white myspace nav strip */
   .osd-top-bar {
     background: #fff; color: #000; border-bottom: 2px solid #000;
@@ -751,15 +762,6 @@
 // ═══ Dataset ═══
 const DATA = [
   {
-    id: 'baby-arcade-sa', cat: 'thrift', name: 'Baby Arcade', city: 'San Antonio', state: 'TX',
-    desc: 'Y2K vintage heaven — curated clothing, retro toys, pop-culture finds and graphic tees. Nostalgia overload with tiny prices.',
-    img: 'https://www.babyarcade.net/uploads/b/1a0ec5b0-113a-11ee-b326-bd34a9dd03b4/STICKERLOGO2.jpeg',
-    address: '125 Lamar St, Unit 108, San Antonio, TX 78202',
-    hours: 'Thu–Sat 2–8pm · Sun 2–6pm · Mon–Wed closed',
-    price: '$3+', era: 'Y2K / 2000s',
-    tags: ['Y2K', 'Graphic Tees', 'Toys', 'Downtown SA']
-  },
-  {
     id: 'baby-arcade-mcallen', cat: 'thrift', name: 'Baby Arcade — McAllen', city: 'McAllen', state: 'TX',
     desc: 'The RGV Valley outpost of the iconic Y2K vintage spot. Loaded with retro tees, streetwear, and aesthetic accessories.',
     img: 'https://www.babyarcade.net/uploads/b/1a0ec5b0-113a-11ee-b326-bd34a9dd03b4/STICKERLOGO2.jpeg',
@@ -770,6 +772,7 @@ const DATA = [
   },
   {
     id: 'room-service-atx', cat: 'thrift', name: 'Room Service Vintage', city: 'Austin', state: 'TX', ph: '✿',
+    img: 'https://roomservicevintage.com/wp-content/uploads/2022/11/GoogleStreetViewImage.jpg',
     desc: 'A sprawling North Loop showroom of mid-century treasures — 50s–70s furniture, neon lighting, retro clothes, vinyl records, and strange curiosities.',
     address: '117 E North Loop Blvd, Austin, TX 78751',
     hours: 'Open Daily 11am–7pm',
@@ -778,6 +781,7 @@ const DATA = [
   },
   {
     id: 'canela-vintage-sa', cat: 'thrift', name: 'Canela Vintage', city: 'San Antonio', state: 'TX', ph: '✿',
+    img: 'https://cdn.shopify.com/s/files/1/1685/3653/files/canela_logo.jpg?v=1634702459',
     desc: 'Street-level curated vintage in downtown San Antonio. From 90s grunge and band tees to rare designer leather jackets.',
     address: '110 Broadway, Suite 175, San Antonio, TX 78205',
     hours: 'Tue–Sat 10:30am–6pm · Sun 10am–3:30pm',
@@ -802,6 +806,7 @@ const DATA = [
   },
   {
     id: 'texas-thrift-sa', cat: 'thrift', name: 'Texas Thrift Store', city: 'San Antonio', state: 'TX', ph: '✿',
+    img: 'https://texasthrift.com/wp-content/uploads/preview-img-2-1024x538.png',
     desc: 'Massive rack digger paradise with rock-bottom prices. Daily restocks of clothes, shoes, housewares across 4 SA locations.',
     address: '6776 Ingram Rd (+3 more SA locations), San Antonio, TX',
     hours: 'Mon–Sat 9am–9pm · Sun closed',
@@ -818,6 +823,7 @@ const DATA = [
   },
   {
     id: 'friends-of-sound-sa', cat: 'thrift', name: 'Friends of Sound', city: 'San Antonio', state: 'TX', ph: '✿',
+    img: 'https://images.squarespace-cdn.com/content/v1/652c5d8d17862613a85adadb/4e521d46-eeb0-47f6-b695-fabc0ecf30a9/fos-logo-big.png',
     desc: 'Record shop meets Y2K vintage — well-curated vinyl crates alongside racks of Y2K fashion and oversized cartoon graphic tees.',
     address: '700 Fredericksburg Rd, San Antonio, TX 78201',
     hours: 'Check friendsofsoundrecords.com for hours',
@@ -986,7 +992,7 @@ const DATA = [
     tags: ['Emos Austin', 'Goth', 'Metalcore', 'Scene']
   },
   {
-    id: 'militarie-gun-mohawk', cat: 'show', name: 'Militarie Gun', city: 'Austin', state: 'TX', date: 'SEP 9 · 7:30 PM', ph: '♫',
+    id: 'militarie-gun-mohawk', cat: 'show', name: 'Militarie Gun', city: 'Austin', state: 'TX', date: 'SEP 9 · 7:30 PM', wiki: 'Militarie_Gun', ph: '♫',
     desc: 'Buzzy punk/alt outfit Militarie Gun tears up Mohawk Outdoors.',
     venue: 'Mohawk (Outdoor)', address: '912 Red River St, Austin, TX 78701',
     hours: 'Show 7:30 PM', price: '$$', era: 'Punk / Alt',
@@ -1127,6 +1133,7 @@ function render() {
     const saved = savedIds.has(d.id);
     return `
       <div class="card ${d.cat}" data-id="${d.id}">
+        <div class="card-photo" data-photo-for="${d.id}"></div>
         <div class="card-top-bar">
           <span>SPOT #${String(DATA.indexOf(d) + 1).padStart(3, '0')}</span>
           <button class="save-star ${saved ? 'saved' : ''}" onclick="toggleSave('${d.id}', event)">
@@ -1158,6 +1165,45 @@ function render() {
       </div>
     `;
   }).join('');
+
+  applyCardPhotos();
+}
+
+// on-theme placeholder so EVERY tile shows something, even with no photo online
+function svgPlaceholder(cat) {
+  const icon = cat === 'thrift' ? '✿' : cat === 'show' ? '♫' : '✦';
+  const svg = "<svg xmlns='http://www.w3.org/2000/svg' width='400' height='300'>"
+    + "<defs><pattern id='p' width='22' height='22' patternTransform='rotate(45)' patternUnits='userSpaceOnUse'>"
+    + "<line x1='0' y1='0' x2='0' y2='22' stroke='#ffffff' stroke-width='1' opacity='0.5'/></pattern></defs>"
+    + "<rect width='100%' height='100%' fill='#0b0b0b'/>"
+    + "<rect width='100%' height='100%' fill='url(%23p)'/>"
+    + "<text x='50%' y='63%' font-size='150' text-anchor='middle' fill='#ffffff' opacity='0.55'>" + icon + "</text>"
+    + "</svg>";
+  return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
+}
+
+// resolve a find's photo once (direct img → wikipedia → themed placeholder), cache it
+async function resolvePhoto(d) {
+  if (d._photo !== undefined) return d._photo;
+  let url = null;
+  if (d.img) url = await checkImage(d.img);
+  if (!url && d.wiki) { const w = await fetchWikiPhoto(d.wiki); if (w) url = await checkImage(w); }
+  if (!url) url = svgPlaceholder(d.cat);   // always show a fallback
+  d._photo = url;
+  return url;
+}
+
+// drop the resolved photo behind each visible tile
+function applyCardPhotos() {
+  document.querySelectorAll('.card-photo').forEach(el => {
+    const d = DATA.find(x => x.id === el.dataset.photoFor);
+    if (!d) return;
+    if (d._photo) { el.style.backgroundImage = `url("${d._photo}")`; el.classList.add('on'); return; }
+    if (d._photo === null) return;  // known to have none
+    resolvePhoto(d).then(url => {
+      if (url) { el.style.backgroundImage = `url("${url}")`; el.classList.add('on'); }
+    });
+  });
 }
 
 shuffleBtn.addEventListener('click', () => {
