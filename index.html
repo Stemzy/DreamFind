@@ -759,7 +759,44 @@
 </div>
 
 <script>
-// ═══ Dataset ═══
+/* ═══════════════════════════════════════════════════════════════════
+   ★ HOW TO ADD YOUR OWN PLACE ★
+   Copy the TEMPLATE below, paste it inside the [ ... ] list (anywhere
+   between the [ and the ] ), fill in your info, and save. Done!
+
+   FIELDS:
+   • id       – unique nickname, no spaces (e.g. 'my-fav-shop'). Must be different from every other id.
+   • cat      – pick ONE: 'thrift'  (shops/vintage)   'show'  (concerts)   'event' (surreal events)
+   • name     – the name shown on the tile
+   • city     – e.g. 'San Antonio'      • state – e.g. 'TX'
+   • desc     – a sentence describing the place
+   • address  – full street address (also powers the map + directions button)
+   • hours    – e.g. 'Mon–Sat 11am–7pm'  or for shows 'Doors 7pm · Show 8pm'
+   • price    – e.g. '$', '$$', '$20+', 'FREE'
+   • era      – short vibe label, e.g. 'Y2K', 'Punk', '90s Indie'
+   • tags     – list of hashtags for filtering, e.g. ['Y2K','Records','Downtown']
+   • venue    – (SHOWS/EVENTS only) where it's held, e.g. 'Paper Tiger'
+   • date     – (SHOWS/EVENTS only) e.g. 'AUG 20 · 8:00 PM'
+
+   ADDING A PHOTO (optional). The tile background uses, in order:
+     1. img  – your own photo. Two ways:
+              • a web link:   img: 'https://example.com/photo.jpg'
+              • your own file: drop it in the /images folder, then  img: 'images/myshop.jpg'
+     2. wiki – a Wikipedia article title (auto-fetches its photo), e.g. wiki: 'Soulfly'
+     3. if neither, it auto-uses a map of the address, then a themed icon.
+
+   ─── TEMPLATE (copy the block between the lines) ───────────────────
+   {
+     id: 'CHANGE-ME', cat: 'thrift', name: 'My Place', city: 'San Antonio', state: 'TX',
+     img: 'images/my-place.jpg',
+     desc: 'What makes this spot cool.',
+     address: '123 Example St, San Antonio, TX 78205',
+     hours: 'Mon–Sat 11am–7pm',
+     price: '$$', era: 'Y2K',
+     tags: ['Y2K', 'Vintage', 'Downtown']
+   },
+   ──────────────────────────────────────────────────────────────────
+   ═══════════════════════════════════════════════════════════════════ */
 const DATA = [
   {
     id: 'baby-arcade-mcallen', cat: 'thrift', name: 'Baby Arcade — McAllen', city: 'McAllen', state: 'TX',
@@ -958,6 +995,7 @@ const DATA = [
   },
   {
     id: 'emo-prom-mix', cat: 'show', name: 'Puro Emo: Emo Prom', city: 'San Antonio', state: 'TX', date: 'AUG 8 · 9:00 PM', ph: '♫',
+    img: 'images/emo-prom.jpg',
     desc: 'Emo Prom with Dennis Lee + Shawn Milke (Alesana) spinning all your 2000s emo anthems. Dress your blackest.',
     venue: 'The Mix', address: "2423 N St Mary's St, San Antonio, TX 78212",
     hours: 'Doors 9:00 PM', price: '$', era: '2000s Emo Night',
@@ -1188,7 +1226,8 @@ async function resolvePhoto(d) {
   let url = null;
   if (d.img) url = await checkImage(d.img);
   if (!url && d.wiki) { const w = await fetchWikiPhoto(d.wiki); if (w) url = await checkImage(w); }
-  if (!url) url = svgPlaceholder(d.cat);   // always show a fallback
+  if (!url && d.address) { const g = await geocode(d.address); if (g) { const m = mapImage(g); if (await checkImage(m)) url = m; } }
+  if (!url) url = svgPlaceholder(d.cat);   // last-resort themed fallback
   d._photo = url;
   return url;
 }
@@ -1256,8 +1295,39 @@ function checkImage(url) {
     img.onload = () => res(url);
     img.onerror = () => res(null);
     img.src = url;
-    setTimeout(() => res(null), 4000);
+    setTimeout(() => res(null), 5000);
   });
+}
+
+// ── keyless map snapshot for addresses with no photo (OpenStreetMap) ──
+const geoCache = JSON.parse(localStorage.getItem('dreamscape_geo') || '{}');
+let geoQueue = Promise.resolve();
+function cleanAddress(a) {
+  return (a || '')
+    .replace(/\([^)]*\)/g, '')     // drop "(+3 more locations)" etc
+    .split(' — ')[0]               // drop "— see site" tails
+    .replace(/\s+,/g, ',').replace(/\s{2,}/g, ' ').trim();
+}
+
+// throttled to ~1 request/sec (Nominatim usage policy), cached forever in localStorage
+function geocode(address) {
+  const key = cleanAddress(address);
+  if (!key || /^see |\.com$/i.test(key)) return Promise.resolve(null);
+  if (geoCache[key] !== undefined) return Promise.resolve(geoCache[key]);
+  geoQueue = geoQueue.then(async () => {
+    if (geoCache[key] !== undefined) return;
+    await new Promise(r => setTimeout(r, 1100));
+    try {
+      const r = await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&q=' + encodeURIComponent(key));
+      const j = await r.json();
+      geoCache[key] = (j && j[0]) ? [ +j[0].lat, +j[0].lon ] : null;
+    } catch (e) { geoCache[key] = null; }
+    localStorage.setItem('dreamscape_geo', JSON.stringify(geoCache));
+  });
+  return geoQueue.then(() => geoCache[key] ?? null);
+}
+function mapImage(g) {
+  return `https://staticmap.openstreetmap.de/staticmap.php?center=${g[0]},${g[1]}&zoom=16&size=400x300&markers=${g[0]},${g[1]},lightblue1`;
 }
 
 async function openModal(d) {
@@ -1288,12 +1358,7 @@ async function openModal(d) {
   overlay.classList.add('open');
   document.body.style.overflow = 'hidden';
 
-  let loaded = null;
-  if (d.img) loaded = await checkImage(d.img);
-  if (!loaded && d.wiki) {
-    const w = await fetchWikiPhoto(d.wiki);
-    if (w) loaded = await checkImage(w);
-  }
+  const loaded = await resolvePhoto(d);
   if (loaded) {
     mImage.innerHTML = `<img src="${loaded}" alt="${d.name}">`;
   }
