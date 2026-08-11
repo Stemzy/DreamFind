@@ -10,23 +10,24 @@
 <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Silkscreen:wght@400;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root {
-    /* Monochrome cyber-dossier — one blue-violet hue on black */
-    --bg-black: #04050c;
-    --panel-dark: #070a16;
-    --card-bg: #06080f;
-    --card-hover: #0c1024;
-    --border-purple: #6c7bf5;   /* the bright scan line */
+    /* MySpace 2005 — black & white grunge */
+    --bg-black: #000000;
+    --panel-dark: #000000;
+    --card-bg: #000000;
+    --card-hover: #0a0a0a;
+    --border-purple: #8c8c8c;   /* thin grey module borders */
 
-    --text-white: #dfe3ff;
-    --text-muted: #838cce;
+    --text-white: #e6e6e6;
+    --text-muted: #9a9a9a;
 
-    --neon-green: #aeb6ff;      /* primary accent */
-    --neon-blue: #8f9cff;
-    --neon-purple: #9d8bff;
-    --deep-indigo: #2b2f66;
+    --neon-green: #d0d0d0;
+    --neon-blue: #cccccc;
+    --neon-purple: #bcbcbc;
+    --deep-indigo: #222222;
 
-    --line: #6c7bf5;
-    --glow: rgba(120,140,255,.55);
+    --line: #8c8c8c;
+    --acid: #86b02a;            /* sickly myspace green accent */
+    --glow: rgba(255,255,255,.3);
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -421,130 +422,119 @@
   }
 
   /* ═══════════════════════════════════════════════
-     CYBER-DOSSIER SKIN  ·  thin glow frames on black
+     MYSPACE 2005 SKIN  ·  b&w grunge scene profile
      ═══════════════════════════════════════════════ */
   body {
-    background: #04050c;
+    background: #000;
     font-family: 'Share Tech Mono', monospace;
     color: var(--text-white);
-    background-image:
-      radial-gradient(circle at 50% 0%, rgba(108,123,245,.10), transparent 55%);
+    font-size: 13px;
   }
-  /* CRT scanlines */
+  /* faint white film grain */
   body::before {
-    content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 9998;
-    background: repeating-linear-gradient(0deg, rgba(0,0,0,0) 0 2px, rgba(0,0,0,.32) 2px 3px);
-    opacity: .55;
+    content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 9998; opacity: .05;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   }
-  /* faint blueprint grid */
+  /* dark vignette framing the page */
   body::after {
     content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0;
-    background:
-      linear-gradient(rgba(108,123,245,.05) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(108,123,245,.05) 1px, transparent 1px);
-    background-size: 34px 34px;
+    box-shadow: inset 0 0 170px 44px #000;
   }
-  .wrap { position: relative; z-index: 2; }
+  .wrap { position: relative; z-index: 2; max-width: 1100px; }
 
-  /* thin outlined frames, no hard shadows */
-  .card, header.zine-header, .deck-toolbar, .modal-box, .empty-box, .tag-drawer {
-    background: rgba(6,9,20,.6) !important;
+  /* moving grunge scribbles → white */
+  .bg-motif { color: #fff; opacity: .13; }
+  .bg-scanbar { background: linear-gradient(90deg, transparent, #fff, transparent); box-shadow: 0 0 12px rgba(255,255,255,.4); }
+
+  /* modules: black boxes with thin grey border */
+  .card, header.zine-header, .deck-toolbar, .modal-box, .empty-box, .tag-drawer, .modal-info-group {
+    background: #000 !important;
     border: 1px solid var(--line) !important;
-    border-radius: 3px !important;
-    box-shadow: 0 0 0 1px rgba(108,123,245,.12), inset 0 0 22px rgba(108,123,255,.06) !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
   }
-  .card:hover {
-    transform: translateY(-2px);
-    border-color: #aeb6ff !important;
-    box-shadow: 0 0 0 1px rgba(174,182,255,.4), 0 0 22px rgba(120,140,255,.25) !important;
-  }
+  .card { transition: border-color .12s, background .12s; }
+  .card:hover { transform: none; background: #0a0a0a !important; border-color: #fff !important; }
+  .card-body::before, .card-body::after { display: none; }  /* drop cyber brackets */
 
-  /* corner brackets on card content — the "scanned frame" look */
-  .card-body { position: relative; }
-  .card-body::before, .card-body::after {
-    content: ''; position: absolute; width: 11px; height: 11px; pointer-events: none;
-    border: 1px solid var(--line); opacity: .8;
-  }
-  .card-body::before { top: 8px; left: 8px; border-right: 0; border-bottom: 0; }
-  .card-body::after  { bottom: 8px; right: 8px; border-left: 0; border-top: 0; }
-
-  /* header + top bar read like a subject file */
+  /* white myspace nav strip */
   .osd-top-bar {
-    background: #04050c; border-bottom: 1px solid var(--line);
-    color: var(--neon-green); text-transform: uppercase; letter-spacing: 1px;
-    box-shadow: none;
+    background: #fff; color: #000; border-bottom: 2px solid #000;
+    text-transform: none; letter-spacing: 0; font-weight: bold; font-size: 12px; box-shadow: none;
   }
-  header.zine-header { box-shadow: 0 0 0 1px rgba(108,123,245,.12) !important; }
-  h1.brand-title { text-shadow: 0 0 14px rgba(120,140,255,.5); letter-spacing: 2px; }
-  .zine-badge { background: transparent; color: var(--neon-green); border: 1px solid var(--line); box-shadow: none; }
+  .osd-top-bar span { color: #000 !important; }
+  .ms-nav { display: flex; flex-wrap: wrap; gap: 12px; }
+  .ms-nav span { cursor: pointer; }
+  .ms-nav span:hover { text-decoration: underline; }
 
-  /* buttons + tabs: outlined terminal keys */
+  /* profile header */
+  h1.brand-title {
+    font-family: 'Silkscreen', monospace; color: #fff; text-shadow: none;
+    letter-spacing: 1px; font-size: clamp(24px, 5vw, 40px);
+  }
+  .brand-title span { color: #fff !important; }
+  .tagline { color: var(--text-muted); }
+  .tagline strong { color: #fff; }
+  .zine-badge { background: #fff; color: #000; border: 0; border-radius: 0; font-weight: bold; box-shadow: none; }
+
+  /* buttons + tabs → boxed text links, invert on hover */
   .btn, .tab-btn {
-    background: rgba(8,11,24,.7) !important; border: 1px solid var(--line) !important;
-    border-radius: 3px !important; box-shadow: none !important;
-    color: var(--text-white); text-transform: uppercase; letter-spacing: 1px;
+    background: #000 !important; border: 1px solid var(--line) !important;
+    border-radius: 0 !important; box-shadow: none !important;
+    color: var(--text-white); text-transform: none; letter-spacing: 0; font-size: 11px;
   }
-  .btn:hover, .tab-btn:hover {
-    background: rgba(108,123,245,.15) !important; color: #fff !important;
-    border-color: #aeb6ff !important; transform: translateY(-1px);
-    box-shadow: 0 0 14px rgba(120,140,255,.35) !important;
-  }
+  .btn:hover, .tab-btn:hover { background: #fff !important; color: #000 !important; border-color: #fff !important; transform: none; }
   .btn.active, .tab-btn.active,
   .tab-btn.active[data-cat="all"], .tab-btn.active[data-cat="thrift"],
   .tab-btn.active[data-cat="show"], .tab-btn.active[data-cat="event"] {
-    background: var(--line) !important; color: #04050c !important; font-weight: bold;
-    border-color: var(--line) !important; box-shadow: 0 0 16px var(--glow) !important;
+    background: #fff !important; color: #000 !important; border-color: #fff !important; box-shadow: none !important; font-weight: bold;
   }
 
-  /* inputs */
   select.zine-input, input.zine-input {
-    background: #04050c; border: 1px solid var(--line); border-radius: 3px; color: var(--text-white);
+    background: #000; border: 1px solid var(--line); border-radius: 0; color: #fff; font-size: 13px;
   }
-  .field-group label, .category-tabs, .count-banner { text-transform: uppercase; letter-spacing: 1px; }
+  .field-group label { color: var(--text-muted); text-transform: none; letter-spacing: 0; }
+  .category-tabs, .count-banner { text-transform: none; letter-spacing: 0; }
+  .count-banner span { color: #fff; }
 
-  /* category badge → outlined tag, not filled */
   .cat-badge {
-    background: transparent !important; border: 1px solid var(--line); border-radius: 3px;
-    color: var(--neon-green) !important; box-shadow: none !important; letter-spacing: 1px;
+    background: #111 !important; border: 1px solid var(--line); border-radius: 0;
+    color: #fff !important; box-shadow: none !important; letter-spacing: 0;
   }
 
   /* card typography */
-  .card h3 { text-transform: uppercase; letter-spacing: 1px; color: var(--neon-green); }
-  .card:hover h3 { color: #fff; }
-  .card-top-bar { background: rgba(8,11,24,.7); border-bottom: 1px solid var(--line); text-transform: uppercase; }
-  .card-action { border-top: 1px solid var(--line); color: var(--neon-green); }
+  .card h3 { font-family: 'Share Tech Mono', monospace; text-transform: none; letter-spacing: 0; color: #fff; font-size: 16px; }
+  .card:hover h3 { color: #fff; text-decoration: underline; }
+  .card-top-bar { background: #111; border-bottom: 1px solid var(--line); color: var(--text-muted); text-transform: none; }
+  .card-action { border-top: 1px solid var(--line); color: var(--text-muted); }
+  .save-star:hover, .save-star.saved { color: var(--acid) !important; }
 
   /* tags */
-  .tag-item, .tag-chip { background: #04050c; border: 1px solid var(--line); color: var(--neon-blue); }
-  .tag-item:hover, .tag-chip:hover { background: rgba(108,123,245,.15); color: #fff; }
-  .tag-chip.active { background: var(--line); color: #04050c; box-shadow: 0 0 14px var(--glow); }
+  .tag-item, .tag-chip { background: #000; border: 1px solid var(--line); color: var(--text-white); border-radius: 0; }
+  .tag-item:hover, .tag-chip:hover { background: #fff; color: #000; }
+  .tag-chip.active { background: #fff; color: #000; box-shadow: none; }
+  .drawer-title, .drawer-close { color: #fff; }
+  .drawer-close { border: 1px solid var(--line); border-radius: 0; }
 
-  /* modal as a subject dossier */
-  .modal-box { box-shadow: 0 0 0 1px rgba(108,123,245,.25), 0 0 40px rgba(120,140,255,.15) !important; }
-  .modal-close { background: transparent; border: 1px solid var(--line); color: var(--neon-green); box-shadow: none; }
+  /* modal */
+  .modal-close { background: #fff; border: 1px solid #000; color: #000; border-radius: 0; box-shadow: none; }
   .modal-image { border-bottom: 1px solid var(--line); }
   .modal-image::after {
     content: ''; position: absolute; inset: 0; pointer-events: none;
-    background: repeating-linear-gradient(0deg, rgba(0,0,0,0) 0 2px, rgba(4,5,12,.4) 2px 3px);
+    background: repeating-linear-gradient(0deg, rgba(0,0,0,0) 0 2px, rgba(0,0,0,.45) 2px 3px);
   }
-  /* duotone the photos into the blue scan palette */
-  .modal-image img {
-    filter: grayscale(1) contrast(1.25) brightness(1.05) sepia(1) hue-rotate(200deg) saturate(3.2);
-    opacity: .92;
-  }
-  .modal-body h2 { color: var(--neon-green); text-transform: uppercase; letter-spacing: 1px; }
-  .info-item label { color: var(--neon-blue); letter-spacing: 1px; }
-  .modal-info-group {
-    border: 1px solid var(--line); border-radius: 3px; padding: 14px 16px;
-    background: rgba(8,11,24,.5);
-  }
-  .modal-btn { background: #04050c; border: 1px solid var(--line); border-radius: 3px; box-shadow: none; }
-  .modal-btn:hover { background: var(--line); color: #04050c; box-shadow: 0 0 16px var(--glow); }
-  .modal-btn.secondary { background: #04050c; }
+  .modal-image img { filter: grayscale(1) contrast(1.4) brightness(1.05); opacity: .95; }
+  .modal-image .ph { color: var(--text-muted); }
+  .modal-body h2 { color: #fff; text-transform: none; letter-spacing: 0; font-family: 'Share Tech Mono', monospace; }
+  .info-item label { color: var(--text-muted); letter-spacing: 0; }
+  .modal-info-group { border-radius: 0; padding: 14px 16px; }
+  .modal-btn { background: #000; border: 1px solid var(--line); border-radius: 0; box-shadow: none; color: #fff; }
+  .modal-btn:hover { background: #fff; color: #000; box-shadow: none; }
+  .modal-btn.secondary { background: #000; color: #fff; }
 
-  footer { border-top: 1px solid var(--line); text-transform: uppercase; letter-spacing: 1px; }
+  footer { border-top: 1px solid var(--line); text-transform: none; letter-spacing: 0; color: var(--text-muted); }
   .empty-box { border-style: dashed !important; }
-  ::selection { background: var(--line); color: #04050c; }
+  ::selection { background: #fff; color: #000; }
 
   /* ═══════════════════════════════════════════════
      MOVING BACKGROUND SCENE  ·  drifting dossier motifs
@@ -610,78 +600,72 @@
 
 <!-- ═══ Moving Background Scene ═══ -->
 <div class="bg-scene" aria-hidden="true">
-  <!-- circuit / chip -->
+  <!-- scribble tangle · top right -->
   <div class="bg-motif bg-circuit">
-    <svg viewBox="0 0 200 200" fill="none" stroke="currentColor" stroke-width="1.4">
-      <rect x="60" y="60" width="80" height="80" rx="3"/>
-      <rect x="82" y="82" width="36" height="36" rx="2"/>
-      <path d="M100 60V30M100 140v30M60 100H30M140 100h30M70 60V40M130 60V40M70 140v20M130 140v20"/>
-      <path d="M40 40h20v20M160 40h-20v20M40 160h20v-20M160 160h-20v-20"/>
-      <circle cx="30" cy="30" r="2.5"/><circle cx="170" cy="30" r="2.5"/>
-      <circle cx="30" cy="170" r="2.5"/><circle cx="170" cy="170" r="2.5"/>
-      <path d="M118 82l16-16M82 118l-16 16"/>
+    <svg viewBox="0 0 200 200" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round">
+      <path d="M20 40C60 10 90 70 130 30S180 90 150 120 90 100 70 140 120 170 170 150"/>
+      <path d="M10 90C50 60 40 130 100 110S150 40 190 80 140 160 90 150 30 120 60 80"/>
+      <path d="M40 20C30 80 110 60 100 130S30 150 80 190"/>
+      <path d="M160 20C140 70 190 100 150 150 110 180 170 190 190 160"/>
     </svg>
   </div>
 
-  <!-- signal waveform -->
+  <!-- scribble tangle · bottom right -->
   <div class="bg-motif bg-wave">
-    <svg viewBox="0 0 340 120" fill="none" stroke="currentColor" stroke-width="1.6">
-      <rect x="1" y="1" width="338" height="118" opacity=".4"/>
-      <path d="M6 60 Q40 10 74 60 T142 60 T210 60 T278 60 T340 60"/>
-      <path d="M6 90 H334 M6 30 H334" opacity=".25"/>
+    <svg viewBox="0 0 340 120" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round">
+      <path d="M10 60C60 20 90 100 150 70S220 20 280 60 320 110 330 80"/>
+      <path d="M20 90C80 60 60 30 130 40S200 100 260 70 300 30 335 55"/>
+      <path d="M10 30C70 50 120 10 180 40S250 90 320 50"/>
     </svg>
   </div>
 
-  <!-- fingerprint -->
+  <!-- scribble tangle · left -->
   <div class="bg-motif bg-print">
-    <svg viewBox="0 0 100 130" fill="none" stroke="currentColor" stroke-width="1.3">
-      <rect x="4" y="4" width="14" height="14" stroke-width="1"/><rect x="82" y="4" width="14" height="14" stroke-width="1"/>
-      <rect x="4" y="112" width="14" height="14" stroke-width="1"/><rect x="82" y="112" width="14" height="14" stroke-width="1"/>
-      <ellipse cx="50" cy="65" rx="10" ry="14"/>
-      <ellipse cx="50" cy="65" rx="18" ry="24"/>
-      <path d="M22 65a28 34 0 0 1 56 0" /><path d="M20 78a30 40 0 0 0 60 -4"/>
-      <path d="M26 50a24 30 0 0 1 48 2"/><path d="M32 90a18 20 0 0 0 36 -2"/>
+    <svg viewBox="0 0 100 130" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round">
+      <path d="M20 10C10 40 60 30 50 70S10 100 40 125"/>
+      <path d="M70 15C50 45 90 55 70 90 50 120 90 120 85 100"/>
+      <path d="M15 60C45 50 35 90 75 80"/>
+      <path d="M30 30C55 25 45 55 80 45"/>
     </svg>
   </div>
 
-  <!-- drifting pixels / dither figure -->
+  <!-- scribble ball · lower left -->
   <div class="bg-motif bg-pixels">
-    <svg viewBox="0 0 70 100" fill="currentColor">
-      <rect x="30" y="4" width="8" height="8"/><rect x="24" y="14" width="8" height="8"/><rect x="38" y="14" width="8" height="8"/>
-      <rect x="30" y="24" width="8" height="8"/><rect x="18" y="34" width="8" height="8"/><rect x="44" y="34" width="8" height="8"/>
-      <rect x="30" y="44" width="8" height="8"/><rect x="24" y="56" width="8" height="8"/><rect x="38" y="56" width="8" height="8"/>
-      <rect x="18" y="70" width="8" height="8"/><rect x="44" y="70" width="8" height="8"/><rect x="30" y="84" width="8" height="8"/>
+    <svg viewBox="0 0 70 100" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round">
+      <path d="M15 20C40 5 30 45 55 35S60 70 35 65 5 55 25 40 55 55 40 85"/>
+      <path d="M20 50C45 40 25 75 55 70"/>
+      <path d="M10 70C35 60 30 90 60 85"/>
     </svg>
   </div>
 
-  <!-- ghost eye scan -->
+  <!-- scribble tangle · upper left -->
   <div class="bg-motif bg-eye">
-    <svg viewBox="0 0 200 120" fill="none" stroke="currentColor" stroke-width="1.4">
-      <path d="M10 60 Q100 8 190 60 Q100 112 10 60Z"/>
-      <circle cx="100" cy="60" r="24"/><circle cx="100" cy="60" r="10" fill="currentColor" opacity=".5"/>
-      <path d="M20 60H2M198 60h-18" opacity=".5"/>
+    <svg viewBox="0 0 200 120" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round">
+      <path d="M10 40C50 10 60 80 110 50S180 20 195 70 130 110 90 90 30 100 60 60"/>
+      <path d="M20 80C70 60 100 30 150 60 190 82 160 100 120 95"/>
     </svg>
   </div>
 
   <div class="bg-scanbar"></div>
 </div>
 
-<!-- ═══ OSD Bar ═══ -->
+<!-- ═══ MySpace-style nav ═══ -->
 <div class="osd-top-bar">
-  <div><span class="tag-green">● ARCHIVE ONLINE</span> — TEXAS UNDERGROUND ZINE</div>
-  <div><span class="tag-blue">STATUS: READY</span> | <span class="tag-purple">Y2K FINDER</span></div>
+  <div><span style="font-weight:bold;">dreamscape</span><span style="font-weight:normal;">.com</span></div>
+  <div class="ms-nav"><span>Home</span><span>Browse</span><span>Find Finds</span><span>Shows</span><span>Thrift</span><span>More ▾</span></div>
 </div>
 
 <div class="wrap">
-  <!-- ═══ Handcrafted Header Banner ═══ -->
+  <!-- ═══ Profile Header ═══ -->
   <header class="zine-header">
     <div class="zine-top-row">
-      <span class="zine-badge">★ UNDERGROUND ZINE ★</span>
-      <span style="font-family:'Share Tech Mono',monospace; font-size:13px; color:var(--neon-green);">TX REGION</span>
+      <span class="zine-badge">DREAMSCAPE_TX</span>
+      <span style="font-family:'Share Tech Mono',monospace; font-size:12px; color:var(--acid);">◉ online now!</span>
     </div>
     <h1 class="brand-title">DREAMSCAPE <span class="green-txt">FINDER</span></h1>
     <p class="tagline">
-      Handcrafted finder for <strong>curated vintage &amp; thrift shops</strong>, <strong>underground concerts</strong>, and <strong>surreal local events</strong>.
+      local celebrity [re: on an fbi watchlist] · <strong>thrift &amp; vintage</strong>, <strong>underground shows</strong>, <strong>surreal events</strong> across TX.<br>
+      view: about, recents, likes, following...MORE
     </p>
   </header>
 
@@ -923,13 +907,90 @@ const DATA = [
     tags: ['Psych Rock', 'Red River', 'Visuals']
   },
   {
-    id: 'paper-tiger-sa', cat: 'show', name: 'Holy Wire + Fever Vibes', city: 'San Antonio', state: 'TX', date: 'AUG 19 · 8:30 PM', ph: '♫',
-    desc: "Post-punk synthwave night at Paper Tiger on the St. Mary's strip — San Antonio's beloved DIY venue.",
+    id: 'paper-tiger-sa', cat: 'show', name: 'Fevr + Holy Wire + Death Palmz', city: 'San Antonio', state: 'TX', date: 'AUG 19 · 8:00 PM', ph: '♫',
+    desc: "Fevr with Vick Vapors, Holy Wire and Death Palmz — post-punk synthwave night at Paper Tiger on the St. Mary's strip, SA's beloved DIY venue.",
     venue: 'Paper Tiger',
     address: "2410 N St Mary's St, San Antonio, TX 78212",
-    hours: 'Doors 8:00 PM · Music 8:30 PM',
-    price: '$15', era: 'Post-Punk / Synth',
-    tags: ['Paper Tiger', 'Post-Punk', 'St. Marys Strip']
+    hours: 'Doors 7:00 PM · Show 8:00 PM',
+    price: '$20+', era: 'Post-Punk / Synth',
+    tags: ['Paper Tiger', 'Post-Punk', 'Synth', 'St. Marys Strip']
+  },
+  {
+    id: 'emarosa-pt', cat: 'show', name: 'Emarosa', city: 'San Antonio', state: 'TX', date: 'AUG 21 · 7:30 PM', wiki: 'Emarosa', ph: '♫',
+    desc: 'Post-hardcore-turned-pop favorites Emarosa bring the emotional bangers to Paper Tiger.',
+    venue: 'Paper Tiger', address: "2410 N St Mary's St, San Antonio, TX 78212",
+    hours: 'Show 7:30 PM', price: '$$', era: 'Post-Hardcore / Emo',
+    tags: ['Paper Tiger', 'Emo', 'Post-Hardcore', 'St. Marys Strip']
+  },
+  {
+    id: 'unsane-pt', cat: 'show', name: 'Unsane', city: 'San Antonio', state: 'TX', date: 'SEP 9 · 8:00 PM', wiki: 'Unsane', ph: '♫',
+    desc: 'NYC noise-rock legends Unsane grind through Paper Tiger — sludgy, loud, unrelenting.',
+    venue: 'Paper Tiger', address: "2410 N St Mary's St, San Antonio, TX 78212",
+    hours: 'Show 8:00 PM', price: '$$', era: 'Noise Rock',
+    tags: ['Paper Tiger', 'Noise Rock', 'Punk', 'St. Marys Strip']
+  },
+  {
+    id: 'soulfly-pt', cat: 'show', name: 'Soulfly', city: 'San Antonio', state: 'TX', date: 'SEP 22 · 7:00 PM', wiki: 'Soulfly', ph: '♫',
+    desc: 'Max Cavalera brings the tribal-metal riffage of Soulfly to Paper Tiger.',
+    venue: 'Paper Tiger', address: "2410 N St Mary's St, San Antonio, TX 78212",
+    hours: 'Show 7:00 PM', price: '$$', era: 'Metal',
+    tags: ['Paper Tiger', 'Metal', 'Heavy', 'St. Marys Strip']
+  },
+  {
+    id: 'built-to-spill-pt', cat: 'show', name: 'Built To Spill', city: 'San Antonio', state: 'TX', date: 'SEP 24 · 8:00 PM', wiki: 'Built_to_Spill', ph: '♫',
+    desc: 'Indie-rock icons Built To Spill w/ Paul Schalda — fuzzy guitars and heart at Paper Tiger.',
+    venue: 'Paper Tiger', address: "2410 N St Mary's St, San Antonio, TX 78212",
+    hours: 'Show 8:00 PM', price: '$$', era: '90s Indie Rock',
+    tags: ['Paper Tiger', 'Indie Rock', 'Alt', 'St. Marys Strip']
+  },
+  {
+    id: 'menzingers-pt', cat: 'show', name: 'The Menzingers + Hot Water Music', city: 'San Antonio', state: 'TX', date: 'SEP 25 · 7:00 PM', wiki: 'The_Menzingers', ph: '♫',
+    desc: 'The Menzingers with Hot Water Music and Weakened Friends — a punk-rock triple bill for the ages at Paper Tiger.',
+    venue: 'Paper Tiger', address: "2410 N St Mary's St, San Antonio, TX 78212",
+    hours: 'Show 7:00 PM', price: '$$', era: 'Punk / Emo',
+    tags: ['Paper Tiger', 'Punk', 'Emo', 'St. Marys Strip']
+  },
+  {
+    id: 'emo-prom-mix', cat: 'show', name: 'Puro Emo: Emo Prom', city: 'San Antonio', state: 'TX', date: 'AUG 8 · 9:00 PM', ph: '♫',
+    desc: 'Emo Prom with Dennis Lee + Shawn Milke (Alesana) spinning all your 2000s emo anthems. Dress your blackest.',
+    venue: 'The Mix', address: "2423 N St Mary's St, San Antonio, TX 78212",
+    hours: 'Doors 9:00 PM', price: '$', era: '2000s Emo Night',
+    tags: ['Emo', 'Emo Night', 'St. Marys Strip', 'Dance Party']
+  },
+  {
+    id: 'quicksand-mohawk', cat: 'show', name: 'Quicksand + Bane', city: 'Austin', state: 'TX', date: 'AUG 9 · 7:30 PM', wiki: 'Quicksand_(band)', ph: '♫',
+    desc: 'Post-hardcore heavyweights Quicksand with Bane and Soul Blind on the Mohawk outdoor stage.',
+    venue: 'Mohawk (Outdoor)', address: '912 Red River St, Austin, TX 78701',
+    hours: 'Show 7:30 PM', price: '$$', era: 'Post-Hardcore',
+    tags: ['Mohawk', 'Post-Hardcore', 'Red River', 'Hardcore']
+  },
+  {
+    id: 'clipping-mohawk', cat: 'show', name: 'clipping.', city: 'Austin', state: 'TX', date: 'AUG 7 · 8:00 PM', wiki: 'Clipping_(group)', ph: '♫',
+    desc: 'Experimental noise-rap trio clipping. (yes, Daveed Diggs) warps the Mohawk stage.',
+    venue: 'Mohawk', address: '912 Red River St, Austin, TX 78701',
+    hours: 'Show 8:00 PM', price: '$$', era: 'Experimental Hip-Hop',
+    tags: ['Mohawk', 'Experimental', 'Hip-Hop', 'Red River']
+  },
+  {
+    id: 'citizen-emos', cat: 'show', name: 'Citizen', city: 'Austin', state: 'TX', date: 'SEP 9 · 7:00 PM', wiki: 'Citizen_(band)', ph: '♫',
+    desc: 'Emo/post-hardcore favorites Citizen headline Emo\'s Austin — cathartic and loud.',
+    venue: "Emo's Austin", address: '2015 E Riverside Dr, Austin, TX 78741',
+    hours: 'Show 7:00 PM', price: '$$', era: 'Emo / Post-Hardcore',
+    tags: ['Emos Austin', 'Emo', 'Post-Hardcore', 'Alt']
+  },
+  {
+    id: 'bvb-emos', cat: 'show', name: 'Black Veil Brides', city: 'Austin', state: 'TX', date: 'AUG 31 · 5:30 PM', wiki: 'Black_Veil_Brides', ph: '♫',
+    desc: 'Theatrical goth-metal icons Black Veil Brides — Vindicatour 2026 lands at Emo\'s Austin.',
+    venue: "Emo's Austin", address: '2015 E Riverside Dr, Austin, TX 78741',
+    hours: 'Doors 5:30 PM', price: '$$', era: 'Goth / Metalcore',
+    tags: ['Emos Austin', 'Goth', 'Metalcore', 'Scene']
+  },
+  {
+    id: 'militarie-gun-mohawk', cat: 'show', name: 'Militarie Gun', city: 'Austin', state: 'TX', date: 'SEP 9 · 7:30 PM', ph: '♫',
+    desc: 'Buzzy punk/alt outfit Militarie Gun tears up Mohawk Outdoors.',
+    venue: 'Mohawk (Outdoor)', address: '912 Red River St, Austin, TX 78701',
+    hours: 'Show 7:30 PM', price: '$$', era: 'Punk / Alt',
+    tags: ['Mohawk', 'Punk', 'Alt', 'Red River']
   },
   {
     id: 'bat-fest-atx', cat: 'event', name: 'Bat Fest 2026', city: 'Austin', state: 'TX', date: 'AUG 22 · DUSK', wiki: 'Ann_W._Richards_Congress_Avenue_Bridge', ph: '✦',
