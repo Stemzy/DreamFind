@@ -460,6 +460,10 @@
   .card-photo.on { opacity: .34; }
   /* flash to full color on hover, like tuning in */
   .card:hover .card-photo.on { opacity: .6; filter: grayscale(0) sepia(0) saturate(1.15) contrast(1.05) brightness(1); }
+  /* 404 fallback: fit the whole graphic, don't crop it */
+  .card-photo.ph404 { background-size: 64% auto; background-repeat: no-repeat; background-position: center;
+    filter: grayscale(1) sepia(1) hue-rotate(58deg) saturate(2) brightness(.85); opacity: .5; }
+  .card:hover .card-photo.ph404 { background-size: 68% auto; opacity: .72; filter: none; }
   /* VHS scanlines + a soft vignette over the photo */
   .card-photo::after {
     content: ''; position: absolute; inset: 0; pointer-events: none;
@@ -692,6 +696,18 @@
   .gb-entries b { color: var(--acid); font-weight: normal; }
 
   @media (prefers-reduced-motion: reduce) { .crt, .np-bar span { animation: none !important; } }
+
+  /* ═══ readable button text (tiles keep their retro fonts) ═══ */
+  .btn, .tab-btn, .np-shuffle, .np-save,
+  .cal-month, .cal-back, .cal-clear, .cal-x,
+  .drawer-close, .drawer-title, .gb-sign, .modal-btn, .modal-close,
+  .field-group label, .np-label {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif !important;
+    letter-spacing: .2px !important; text-transform: none !important;
+  }
+  .btn, .tab-btn { font-size: 12.5px; font-weight: 600; }
+  .np-label { font-weight: 700; }
+  .field-group label { font-weight: 600; font-size: 11px; }
 </style>
 </head>
 <body>
@@ -1981,28 +1997,32 @@ function svgPlaceholder(cat) {
   return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
 }
 
-// resolve a find's photo once (direct img → wikipedia → themed placeholder), cache it
+const NOT_FOUND = 'images/not-found.png';   // 404 fallback image
+
+// resolve a find's photo once (direct img → wikipedia → address map → 404), cache it
 async function resolvePhoto(d) {
   if (d._photo !== undefined) return d._photo;
   let url = null;
   if (d.img) url = await checkImage(d.img);
   if (!url && d.wiki) { const w = await fetchWikiPhoto(d.wiki); if (w) url = await checkImage(w); }
   if (!url && d.address) { const g = await geocode(d.address); if (g) { const m = mapImage(g); if (await checkImage(m)) url = m; } }
-  if (!url) url = svgPlaceholder(d.cat);   // last-resort themed fallback
+  if (!url) url = NOT_FOUND;   // no photo / failed to load → show the 404
   d._photo = url;
   return url;
 }
 
 // drop the resolved photo behind each visible tile
+function setCardPhoto(el, url) {
+  el.style.backgroundImage = `url("${url}")`;
+  el.classList.add('on');
+  el.classList.toggle('ph404', url === NOT_FOUND);
+}
 function applyCardPhotos() {
   document.querySelectorAll('.card-photo').forEach(el => {
     const d = DATA.find(x => x.id === el.dataset.photoFor);
     if (!d) return;
-    if (d._photo) { el.style.backgroundImage = `url("${d._photo}")`; el.classList.add('on'); return; }
-    if (d._photo === null) return;  // known to have none
-    resolvePhoto(d).then(url => {
-      if (url) { el.style.backgroundImage = `url("${url}")`; el.classList.add('on'); }
-    });
+    if (d._photo) { setCardPhoto(el, d._photo); return; }
+    resolvePhoto(d).then(url => { if (url) setCardPhoto(el, url); });
   });
 }
 
@@ -2154,7 +2174,8 @@ async function openModal(d) {
 
   const loaded = await resolvePhoto(d);
   if (loaded) {
-    mImage.innerHTML = `<img src="${loaded}" alt="${d.name}">`;
+    const fit = loaded === NOT_FOUND ? ' style="object-fit:contain;padding:30px;"' : '';
+    mImage.innerHTML = `<img src="${loaded}" alt="${d.name}"${fit}>`;
   }
 }
 
