@@ -453,13 +453,12 @@
     position: absolute; inset: 0; z-index: 0; pointer-events: none;
     background-size: cover; background-position: center;
     opacity: 0;
-    filter: grayscale(1) contrast(1.05) brightness(.82) blur(1.4px)
+    filter: grayscale(1) contrast(1.05) brightness(.82)
             drop-shadow(1.2px 0 rgba(0,190,255,.22)) drop-shadow(-1.2px 0 rgba(255,40,90,.22));
-    transform: scale(1.04);   /* hide blur edges */
     transition: opacity .4s ease, filter .3s ease;
   }
   .card-photo.on { opacity: .32; }
-  .card:hover .card-photo.on { opacity: .48; filter: grayscale(1) contrast(1.1) brightness(.9) blur(1px) drop-shadow(1.4px 0 rgba(0,190,255,.28)) drop-shadow(-1.4px 0 rgba(255,40,90,.28)); }
+  .card:hover .card-photo.on { opacity: .48; filter: grayscale(1) contrast(1.1) brightness(.9) drop-shadow(1.4px 0 rgba(0,190,255,.28)) drop-shadow(-1.4px 0 rgba(255,40,90,.28)); }
   /* VHS scanlines + a soft vignette over the photo */
   .card-photo::after {
     content: ''; position: absolute; inset: 0; pointer-events: none;
