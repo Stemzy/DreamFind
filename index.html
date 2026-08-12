@@ -453,12 +453,13 @@
     position: absolute; inset: 0; z-index: 0; pointer-events: none;
     background-size: cover; background-position: center;
     opacity: 0;
-    filter: grayscale(1) contrast(1.05) brightness(.82)
-            drop-shadow(1.2px 0 rgba(0,190,255,.22)) drop-shadow(-1.2px 0 rgba(255,40,90,.22));
-    transition: opacity .4s ease, filter .3s ease;
+    /* green duotone at rest */
+    filter: grayscale(1) sepia(1) hue-rotate(58deg) saturate(2.4) brightness(.72) contrast(1.1);
+    transition: opacity .4s ease, filter .35s ease;
   }
-  .card-photo.on { opacity: .32; }
-  .card:hover .card-photo.on { opacity: .48; filter: grayscale(1) contrast(1.1) brightness(.9) drop-shadow(1.4px 0 rgba(0,190,255,.28)) drop-shadow(-1.4px 0 rgba(255,40,90,.28)); }
+  .card-photo.on { opacity: .34; }
+  /* flash to full color on hover, like tuning in */
+  .card:hover .card-photo.on { opacity: .6; filter: grayscale(0) sepia(0) saturate(1.15) contrast(1.05) brightness(1); }
   /* VHS scanlines + a soft vignette over the photo */
   .card-photo::after {
     content: ''; position: absolute; inset: 0; pointer-events: none;
@@ -643,6 +644,54 @@
 
   /* let the collage bleed through the chrome; keep listing cards solid + readable */
   header.zine-header, .deck-toolbar { background: rgba(0,0,0,.52) !important; backdrop-filter: blur(1px); }
+
+  /* ═══ Now Playing player bar ═══ */
+  .now-playing {
+    display: flex; align-items: center; gap: 14px; cursor: pointer;
+    background: rgba(0,0,0,.6); border: 1px solid var(--line); padding: 10px 14px;
+    margin-bottom: 22px; overflow: hidden;
+  }
+  .np-label { font-family: 'Silkscreen', monospace; font-size: 11px; color: var(--acid); white-space: nowrap; letter-spacing: 1px; }
+  .np-body { flex: 1; min-width: 0; }
+  .np-track { font-family: 'Share Tech Mono', monospace; font-size: 13px; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .np-track b { color: var(--acid); font-weight: normal; }
+  .np-bar { height: 4px; background: #1c1c1c; margin-top: 7px; overflow: hidden; }
+  .np-bar span { display: block; height: 100%; width: 40%; background: var(--acid); animation: npScrub 9s linear infinite; }
+  @keyframes npScrub { 0% { width: 4%; } 90% { width: 100%; } 100% { width: 100%; } }
+  .np-shuffle, .np-save { background: #000; border: 1px solid var(--line); color: #fff; cursor: pointer; width: 34px; height: 30px; font-size: 15px; }
+  .np-shuffle:hover, .np-save:hover { background: #fff; color: #000; }
+  .np-save.saved { background: var(--acid); color: #000; border-color: var(--acid); }
+
+  /* ═══ CRT flicker + scanlines over whole page ═══ */
+  .crt {
+    position: fixed; inset: 0; pointer-events: none; z-index: 9997;
+    background: repeating-linear-gradient(0deg, rgba(0,0,0,0) 0 2px, rgba(0,0,0,.10) 2px 3px);
+    animation: crtFlicker 5s steps(60) infinite; opacity: .5;
+  }
+  @keyframes crtFlicker { 0%,100% { opacity: .45; } 48% { opacity: .5; } 50% { opacity: .32; } 52% { opacity: .5; } }
+
+  /* ═══ countdown badge on dated tiles ═══ */
+  .count-badge {
+    font-family: 'Silkscreen', monospace; font-size: 9px; letter-spacing: 1px;
+    padding: 3px 7px; border: 1px solid var(--acid); color: var(--acid); background: rgba(0,0,0,.5);
+  }
+  .count-badge.soon { background: var(--acid); color: #000; }
+  .count-badge.past { border-color: #555; color: #666; }
+
+  /* ═══ hit counter + guestbook footer ═══ */
+  .hit-counter { font-family: 'Share Tech Mono', monospace; font-size: 12px; color: var(--text-muted); margin-bottom: 10px; }
+  .odometer {
+    font-family: 'Silkscreen', monospace; letter-spacing: 3px; color: var(--acid);
+    background: #000; border: 1px solid var(--line); padding: 3px 8px;
+  }
+  .guestbook { font-family: 'Share Tech Mono', monospace; font-size: 12px; color: var(--text-muted); margin-bottom: 8px; }
+  .guestbook #gbCount { color: #fff; }
+  .gb-sign { background: #000; border: 1px solid var(--line); color: #fff; cursor: pointer; font-family: 'Silkscreen', monospace; font-size: 10px; padding: 5px 10px; margin-left: 8px; }
+  .gb-sign:hover { background: var(--acid); color: #000; border-color: var(--acid); }
+  .gb-entries { font-family: 'Share Tech Mono', monospace; font-size: 11px; color: var(--text-muted); margin: 4px 0 16px; line-height: 1.7; }
+  .gb-entries b { color: var(--acid); font-weight: normal; }
+
+  @media (prefers-reduced-motion: reduce) { .crt, .np-bar span { animation: none !important; } }
 </style>
 </head>
 <body>
@@ -666,6 +715,17 @@
       view: about, recents, likes, following...MORE
     </p>
   </header>
+
+  <!-- ═══ Now Playing (random upcoming show) ═══ -->
+  <div class="now-playing" id="nowPlaying" title="Click to open · shuffles a random upcoming show">
+    <span class="np-label">♪ NOW&nbsp;PLAYING</span>
+    <div class="np-body">
+      <div class="np-track" id="npTrack">—</div>
+      <div class="np-bar"><span></span></div>
+    </div>
+    <button class="np-save" id="npSave" title="Save this to your watchlist">☆</button>
+    <button class="np-shuffle" id="npShuffle" title="Shuffle another show">⇆</button>
+  </div>
 
   <!-- ═══ Toolbar ═══ -->
   <div class="deck-toolbar">
@@ -716,6 +776,9 @@
     <button class="btn" id="sortBtn">
       <span>↕ SORT: DATE</span>
     </button>
+    <button class="btn" id="weekBtn">
+      <span>◈ THIS WEEK</span>
+    </button>
   </div>
 
   <p class="count-banner" id="countBanner"></p>
@@ -731,9 +794,21 @@
   </div>
 
   <footer>
-    DREAMSCAPE ALT-ZINE · CURATED FOR TEXAS DREAMERS
+    <div class="hit-counter">
+      YOU ARE VISITOR <span class="odometer" id="hitCounter">0000000</span>
+    </div>
+    <div class="guestbook">
+      <span id="gbCount">0</span> souls signed the guestbook
+      <button class="gb-sign" id="gbSign">★ SIGN GUESTBOOK</button>
+    </div>
+    <div class="gb-entries" id="gbEntries"></div>
+    DREAMSCAPE ALT-ZINE · CURATED FOR TEXAS DREAMERS ·
+    <span style="color:var(--acid);">est. 2026</span>
   </footer>
 </div>
+
+<!-- CRT flicker overlay -->
+<div class="crt" aria-hidden="true"></div>
 
 <!-- ═══ Tag Filter Drawer ═══ -->
 <div class="drawer-overlay" id="drawerOverlay"></div>
@@ -1600,6 +1675,7 @@ let activeDate = null;   // { m: 0-11, d: 1-31 }
 let dateSort = null;     // null | 'asc' (soonest first) | 'desc' (latest first)
 let showSavedOnly = false;
 let countPrev = 0;       // last displayed find count (for the roll animation)
+let weekOnly = false;    // "this week" quick filter
 let savedIds = new Set(JSON.parse(localStorage.getItem('dreamscape_watchlist') || '[]'));
 
 const CAT_LABELS = { thrift: '✿ THRIFT & VINTAGE', show: '♫ SHOW & CONCERT', event: '✦ SURREAL EVENT' };
@@ -1633,6 +1709,7 @@ function getItems() {
     if (city !== 'all' && d.city !== city) return false;
     if (activeTag && !(d.tags || []).includes(activeTag)) return false;
     if (activeDate && !itemOnDate(d, activeDate.m, activeDate.d)) return false;
+    if (weekOnly) { const du = daysUntil(d); if (du === null || du < 0 || du > 7) return false; }
     if (showSavedOnly && !savedIds.has(d.id)) return false;
     if (q) {
       const text = (d.name + ' ' + d.desc + ' ' + d.city + ' ' + (d.venue||'') + ' ' + (d.tags||[]).join(' ')).toLowerCase();
@@ -1669,6 +1746,23 @@ function itemTime(d) {
   const ds = parseItemDates(d.date);
   if (!ds.length) return null;
   return Math.min(...ds.map(p => new Date(2026, p.m, p.d).getTime()));
+}
+// whole days from today until a find's date (null if undated)
+function daysUntil(d) {
+  const t = itemTime(d);
+  if (t === null) return null;
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  return Math.round((t - today.getTime()) / 864e5);
+}
+// small countdown badge label + style class for a dated find
+function countdownBadge(d) {
+  const du = daysUntil(d);
+  if (du === null) return null;
+  if (du < 0)  return { text: 'PAST', cls: 'past' };
+  if (du === 0) return { text: 'TODAY', cls: 'soon' };
+  if (du === 1) return { text: 'TOMORROW', cls: 'soon' };
+  if (du <= 7)  return { text: 'IN ' + du + ' DAYS', cls: 'soon' };
+  return { text: 'IN ' + du + ' DAYS', cls: '' };
 }
 // sort finds by date; undated finds (shops) always sink to the bottom
 function sortByDate(items) {
@@ -1834,11 +1928,13 @@ function render() {
 
   grid.innerHTML = items.map(d => {
     const saved = savedIds.has(d.id);
+    const cd = countdownBadge(d);
     return `
       <div class="card ${d.cat}" data-id="${d.id}" title="Click for details · middle-click (or Ctrl/Cmd+click) opens this find in a new tab">
         <div class="card-photo" data-photo-for="${d.id}"></div>
         <div class="card-top-bar">
           <span>SPOT #${String(DATA.indexOf(d) + 1).padStart(3, '0')}</span>
+          ${cd ? `<span class="count-badge ${cd.cls}">${cd.text}</span>` : ''}
           <button class="save-star ${saved ? 'saved' : ''}" onclick="toggleSave('${d.id}', event)">
             ${saved ? '★ SAVED' : '☆ SAVE'}
           </button>
@@ -1930,6 +2026,8 @@ resetBtn.addEventListener('click', () => {
   activeTag = null;
   activeDate = null;
   dateSort = null;
+  weekOnly = false;
+  weekBtn.classList.remove('active');
   updateSortBtn();
   tagActiveDot.classList.remove('on');
   dateActiveDot.classList.remove('on');
@@ -1942,6 +2040,14 @@ resetBtn.addEventListener('click', () => {
 
 // date sort toggle
 sortBtn.addEventListener('click', cycleSort);
+
+// "this week" quick filter
+const weekBtn = document.getElementById('weekBtn');
+weekBtn.addEventListener('click', () => {
+  weekOnly = !weekOnly;
+  weekBtn.classList.toggle('active', weekOnly);
+  render();
+});
 
 // calendar wiring
 calendarBtn.addEventListener('click', openCalendar);
@@ -2139,6 +2245,66 @@ function openFromHash() {
 }
 openFromHash();
 window.addEventListener('hashchange', openFromHash);
+
+/* ═══ NOW PLAYING (random upcoming show) ═══ */
+const nowPlaying = document.getElementById('nowPlaying');
+const npTrack = document.getElementById('npTrack');
+let npCurrent = null;
+function upcomingShows() {
+  const st = stateSel.value, now = Date.now() - 864e5;
+  return DATA.filter(d => d.state === st && (d.cat === 'show' || d.cat === 'event') && itemTime(d) !== null && itemTime(d) >= now);
+}
+const npSave = document.getElementById('npSave');
+function updateNpSave() {
+  const on = npCurrent && savedIds.has(npCurrent.id);
+  npSave.textContent = on ? '★' : '☆';
+  npSave.classList.toggle('saved', !!on);
+}
+function pickNowPlaying() {
+  const pool = upcomingShows();
+  if (!pool.length) { npTrack.textContent = 'no upcoming shows'; npCurrent = null; updateNpSave(); return; }
+  npCurrent = pool[Math.floor(Math.random() * pool.length)];
+  npTrack.innerHTML = `<b>${npCurrent.name}</b> — ${npCurrent.venue || npCurrent.city} · ${npCurrent.date || ''}`;
+  const bar = document.querySelector('.np-bar span');
+  bar.style.animation = 'none'; void bar.offsetWidth; bar.style.animation = '';
+  updateNpSave();
+}
+document.getElementById('npShuffle').addEventListener('click', e => { e.stopPropagation(); pickNowPlaying(); });
+npSave.addEventListener('click', e => {
+  e.stopPropagation();
+  if (npCurrent) { toggleSave(npCurrent.id); updateNpSave(); }
+});
+nowPlaying.addEventListener('click', () => { if (npCurrent) openModal(npCurrent); });   // bar → info popup
+pickNowPlaying();
+setInterval(pickNowPlaying, 9000);
+
+/* ═══ HIT COUNTER ═══ */
+(function () {
+  const base = 13400;
+  let hits = parseInt(localStorage.getItem('dreamscape_hits') || '0', 10) + 1;
+  localStorage.setItem('dreamscape_hits', hits);
+  document.getElementById('hitCounter').textContent = String(base + hits).padStart(7, '0');
+})();
+
+/* ═══ GUESTBOOK ═══ */
+const gbCountEl = document.getElementById('gbCount');
+const gbEntriesEl = document.getElementById('gbEntries');
+function loadGuestbook() { try { return JSON.parse(localStorage.getItem('dreamscape_guestbook') || '[]'); } catch (e) { return []; } }
+function renderGuestbook() {
+  const gb = loadGuestbook();
+  gbCountEl.textContent = gb.length;
+  gbEntriesEl.innerHTML = gb.slice(-4).reverse().map(e => `<b>${e.name}</b>: ${e.msg}`).join('<br>');
+}
+document.getElementById('gbSign').addEventListener('click', () => {
+  const name = (prompt('Sign the guestbook — your name / handle:') || '').trim().slice(0, 24);
+  if (!name) return;
+  const msg = (prompt('Leave a message (optional):') || 'was here ★').trim().slice(0, 80);
+  const gb = loadGuestbook();
+  gb.push({ name, msg });
+  localStorage.setItem('dreamscape_guestbook', JSON.stringify(gb));
+  renderGuestbook();
+});
+renderGuestbook();
 </script>
 </body>
 </html>
