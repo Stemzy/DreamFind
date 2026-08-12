@@ -708,6 +708,18 @@
   .btn, .tab-btn { font-size: 12.5px; font-weight: 600; }
   .np-label { font-weight: 700; }
   .field-group label { font-weight: 600; font-size: 11px; }
+
+  /* ═══ Flyer Wall (gallery) view ═══ */
+  .grid.gallery { grid-template-columns: repeat(auto-fill, minmax(158px, 1fr)); gap: 12px; }
+  .grid.gallery .card { min-height: 210px; }
+  .grid.gallery .desc-text, .grid.gallery .tags-list, .grid.gallery .card-action,
+  .grid.gallery .meta-text, .grid.gallery .cat-badge, .grid.gallery .count-badge,
+  .grid.gallery .card-top-bar span:first-child { display: none; }
+  .grid.gallery .card-top-bar { justify-content: flex-end; }
+  .grid.gallery .card-body { justify-content: flex-end; padding: 12px; min-height: 180px; }
+  .grid.gallery .card-photo { opacity: .9 !important; filter: grayscale(0) saturate(1.1) contrast(1.05) !important; }
+  .grid.gallery .card-photo.ph404 { background-size: 62% auto; filter: grayscale(0) !important; }
+  .grid.gallery .card h3 { font-size: 12px; position: relative; z-index: 2; text-shadow: 0 1px 6px #000, 0 0 3px #000; }
 </style>
 </head>
 <body>
@@ -768,6 +780,12 @@
       </select>
     </div>
     <div class="field-group">
+      <label for="venueSel">VENUE / SPOT</label>
+      <select class="zine-input" id="venueSel">
+        <option value="all">All Venues</option>
+      </select>
+    </div>
+    <div class="field-group">
       <label for="searchBox">SEARCH KEYWORDS</label>
       <input class="zine-input" id="searchBox" type="text" placeholder="Type band, shop name, Y2K, goth...">
     </div>
@@ -792,8 +810,14 @@
     <button class="btn" id="sortBtn">
       <span>↕ SORT: DATE</span>
     </button>
+    <button class="btn" id="tonightBtn">
+      <span>◆ TONIGHT</span>
+    </button>
     <button class="btn" id="weekBtn">
       <span>◈ THIS WEEK</span>
+    </button>
+    <button class="btn" id="galleryBtn">
+      <span>▦ FLYER WALL</span>
     </button>
   </div>
 
@@ -816,6 +840,7 @@
     <div class="guestbook">
       <span id="gbCount">0</span> souls signed the guestbook
       <button class="gb-sign" id="gbSign">★ SIGN GUESTBOOK</button>
+      <button class="gb-sign" id="submitSpot">➤ SUBMIT A SPOT</button>
     </div>
     <div class="gb-entries" id="gbEntries"></div>
     DREAMSCAPE ALT-ZINE · CURATED FOR TEXAS DREAMERS ·
@@ -1117,6 +1142,7 @@ const DATA = [
     price: '$$$', era: 'Cult Horror / Sci-Fi',
     tags: ['Genre Film', 'Horror', 'Alamo Drafthouse']
   },
+  /* PT_AUTO_START — Paper Tiger shows, auto-refreshed weekly by GitHub Action (scripts/refresh_paper_tiger.py). Do not hand-edit between these markers. */
   {
     id: 'pt-aug14-spike-hellis', cat: 'show', name: 'Spike Hellis', city: 'San Antonio', state: 'TX', date: 'AUG 14 · 8:30 PM', ph: '♫',
     link: 'https://wl.seetickets.us/event/spike-hellis/689354?afflky=PaperTiger',
@@ -1655,6 +1681,505 @@ const DATA = [
     hours: 'Doors 6:00 PM · Show 7:00 PM', price: '$$', era: 'Live @ Paper Tiger',
     tags: ['Paper Tiger', 'St. Marys Strip', 'Live Music']
   },
+  /* PT_AUTO_END */
+  {
+    id: 'chan-tres-emos',
+    cat: 'show',
+    name: 'Channel Tres',
+    city: 'Austin',
+    state: 'TX',
+    date: 'SEP 2 · 7:00 PM',
+    venue: 'Emo\'s Austin',
+    wiki: 'Channel_Tres',
+    desc: 'The Enigma Tour — house/hip-hop hypnotist Channel Tres at Emo’s Austin.',
+    address: '2015 E Riverside Dr, Austin, TX 78741',
+    hours: 'Doors 6:00 PM · Show 7:00 PM',
+    price: '$$',
+    era: 'House / Hip-Hop',
+    tags: ['Emos Austin', 'Electronic', 'Hip-Hop', 'Live Music']
+  },
+  {
+    id: 'anthony-green-mohawk',
+    cat: 'show',
+    name: 'Anthony Green',
+    city: 'Austin',
+    state: 'TX',
+    date: 'AUG 14 · 8:00 PM',
+    venue: 'Mohawk',
+    wiki: 'Anthony_Green_(musician)',
+    desc: 'Circa Survive frontman Anthony Green solo at Mohawk.',
+    address: '912 Red River St, Austin, TX 78701',
+    hours: 'Doors 7:00 PM · Show 8:00 PM',
+    price: '$$',
+    era: 'Emo / Alt',
+    tags: ['Mohawk', 'Emo', 'Alt', 'Red River', 'Live Music']
+  },
+  {
+    id: 'vctms-vibes',
+    cat: 'show',
+    name: 'VCTMS + Lost In Separation + Acres',
+    city: 'San Antonio',
+    state: 'TX',
+    date: 'SEP 14 · 7:00 PM',
+    venue: 'Vibes Event Center',
+    desc: 'Metalcore night with VCTMS, Lost In Separation and Acres at Vibes Event Center.',
+    address: 'Vibes Event Center, San Antonio, TX',
+    hours: 'Doors 6:00 PM · Show 7:00 PM',
+    price: '$$',
+    era: 'Metalcore',
+    tags: ['Vibes Event Center', 'Metalcore', 'Heavy', 'Live Music']
+  },
+  {
+    id: 'silent-planet-vibes',
+    cat: 'show',
+    name: 'Silent Planet + Like Moths To Flames',
+    city: 'San Antonio',
+    state: 'TX',
+    date: 'OCT 27 · 6:30 PM',
+    venue: 'Vibes Event Center',
+    wiki: 'Silent_Planet',
+    desc: 'Silent Planet & Like Moths To Flames w/ Save Us — heavy, cathartic night at Vibes Event Center.',
+    address: 'Vibes Event Center, San Antonio, TX',
+    hours: 'Doors 5:30 PM · Show 6:30 PM',
+    price: '$$',
+    era: 'Metalcore',
+    tags: ['Vibes Event Center', 'Metalcore', 'Heavy', 'Live Music']
+  },
+  {
+    id: 'kidd-g-sams',
+    cat: 'show',
+    name: 'Kidd G',
+    city: 'San Antonio',
+    state: 'TX',
+    date: 'SEP 25 · 8:00 PM',
+    venue: 'Sam\'s Burger Joint',
+    desc: 'Country-rap crossover Kidd G at Sam’s Burger Joint.',
+    address: '330 E Grayson St, San Antonio, TX 78215',
+    hours: 'Doors 7:00 PM · Show 8:00 PM',
+    price: '$$',
+    era: 'Country / Rap',
+    tags: ['Sam\'s Burger Joint', 'Country', 'Live Music']
+  },
+  {
+    id: 'xavier-wulf-rockbox',
+    cat: 'show',
+    name: 'Xavier Wulf',
+    city: 'San Antonio',
+    state: 'TX',
+    date: 'OCT 8 · 8:00 PM',
+    venue: 'The Rock Box',
+    wiki: 'Xavier_Wulf',
+    desc: 'Memphis underground rap staple Xavier Wulf at The Rock Box.',
+    address: '1223 E Houston St, San Antonio, TX 78205',
+    hours: 'Doors 7:00 PM · Show 8:00 PM',
+    price: '$$',
+    era: 'Underground Rap',
+    tags: ['The Rock Box', 'Hip-Hop', 'Live Music']
+  },
+  {
+    id: 'belmont-rockbox',
+    cat: 'show',
+    name: 'Belmont',
+    city: 'San Antonio',
+    state: 'TX',
+    date: 'OCT 10 · 7:00 PM',
+    venue: 'The Rock Box',
+    desc: 'Chicago pop-punk outfit Belmont at The Rock Box.',
+    address: '1223 E Houston St, San Antonio, TX 78205',
+    hours: 'Doors 6:00 PM · Show 7:00 PM',
+    price: '$$',
+    era: 'Pop-Punk',
+    tags: ['The Rock Box', 'Pop-Punk', 'Emo', 'Live Music']
+  },
+  {
+    id: 'venue-vibes',
+    cat: 'show',
+    name: 'Vibes Event Center',
+    city: 'San Antonio',
+    state: 'TX',
+    venue: 'Vibes Event Center',
+    link: 'https://vibeseventcenter.com/',
+    ph: '♫',
+    desc: 'East-side warehouse venue — metal, metalcore, hardcore and heavy touring acts.',
+    address: 'Vibes Event Center, San Antonio, TX',
+    hours: 'Rotating lineup · see live calendar',
+    price: 'varies',
+    era: 'Live Venue',
+    tags: ['Metal', 'Metalcore', 'Venue', 'Live Music']
+  },
+  {
+    id: 'venue-stable-hall',
+    cat: 'show',
+    name: 'Stable Hall',
+    city: 'San Antonio',
+    state: 'TX',
+    venue: 'Stable Hall',
+    link: 'https://www.stablehall.com/calendar',
+    ph: '♫',
+    desc: 'Beautiful 1894 hall at the Pearl — indie, roots, tribute and legacy acts.',
+    address: '307 Pearl Pkwy, San Antonio, TX 78215',
+    hours: 'Rotating lineup · see live calendar',
+    price: 'varies',
+    era: 'Live Venue',
+    tags: ['Pearl', 'Indie', 'Venue', 'Live Music']
+  },
+  {
+    id: 'venue-rock-box',
+    cat: 'show',
+    name: 'The Rock Box',
+    city: 'San Antonio',
+    state: 'TX',
+    venue: 'The Rock Box',
+    ph: '♫',
+    desc: 'St. Paul Square club — rap, rock, pop-punk and everything loud.',
+    address: '1223 E Houston St, San Antonio, TX 78205',
+    hours: 'Rotating lineup · see live calendar',
+    price: 'varies',
+    era: 'Live Venue',
+    tags: ['St Pauls', 'Rap', 'Rock', 'Venue', 'Live Music']
+  },
+  {
+    id: 'venue-limelight',
+    cat: 'show',
+    name: 'Limelight',
+    city: 'San Antonio',
+    state: 'TX',
+    venue: 'Limelight',
+    ph: '♫',
+    desc: 'Grimy St. Mary’s strip staple — punk, metal, goth and local bills.',
+    address: '2718 N St Mary’s St, San Antonio, TX 78212',
+    hours: 'Rotating lineup · see live calendar',
+    price: 'varies',
+    era: 'Live Venue',
+    tags: ['St. Marys Strip', 'Punk', 'Metal', 'Venue', 'Live Music']
+  },
+  {
+    id: 'venue-lonesome-rose',
+    cat: 'show',
+    name: 'Lonesome Rose',
+    city: 'San Antonio',
+    state: 'TX',
+    venue: 'Lonesome Rose',
+    ph: '♫',
+    desc: 'Honky-tonk & Americana bar on the St. Mary’s strip — two-step friendly.',
+    address: '2114 N St Mary’s St, San Antonio, TX 78212',
+    hours: 'Rotating lineup · see live calendar',
+    price: 'varies',
+    era: 'Live Venue',
+    tags: ['St. Marys Strip', 'Honky-Tonk', 'Country', 'Venue', 'Live Music']
+  },
+  {
+    id: 'venue-sams',
+    cat: 'show',
+    name: 'Sam’s Burger Joint',
+    city: 'San Antonio',
+    state: 'TX',
+    venue: 'Sam’s Burger Joint',
+    link: 'https://samsburgerjoint.com/calendar/',
+    ph: '♫',
+    desc: 'Longtime all-genre live music room (and burgers) near the Pearl.',
+    address: '330 E Grayson St, San Antonio, TX 78215',
+    hours: 'Rotating lineup · see live calendar',
+    price: 'varies',
+    era: 'Live Venue',
+    tags: ['Live Music', 'Eclectic', 'Venue', 'Live Music']
+  },
+  {
+    id: 'venue-catl',
+    cat: 'show',
+    name: 'Come and Take It Live',
+    city: 'Austin',
+    state: 'TX',
+    venue: 'Come and Take It Live',
+    link: 'https://comeandtakeitproductions.com/calendar/',
+    ph: '♫',
+    desc: 'Riverside venue — metal, punk, hardcore and heavy touring packages.',
+    address: '2015 E Riverside Dr, Austin, TX 78741',
+    hours: 'Rotating lineup · see live calendar',
+    price: 'varies',
+    era: 'Live Venue',
+    tags: ['Metal', 'Punk', 'Venue', 'Live Music']
+  },
+  {
+    id: 'venue-empire',
+    cat: 'show',
+    name: 'Empire Control Room & Garage',
+    city: 'Austin',
+    state: 'TX',
+    venue: 'Empire Control Room & Garage',
+    link: 'https://empireatx.com/calendar/',
+    ph: '♫',
+    desc: 'Two-stage downtown spot — rock, electronic and themed dance nights.',
+    address: '606 E 7th St, Austin, TX 78701',
+    hours: 'Rotating lineup · see live calendar',
+    price: 'varies',
+    era: 'Live Venue',
+    tags: ['Downtown', 'Rock', 'Electronic', 'Venue', 'Live Music']
+  },
+  {
+    id: 'venue-13th-floor',
+    cat: 'show',
+    name: '13th Floor',
+    city: 'Austin',
+    state: 'TX',
+    venue: '13th Floor',
+    ph: '♫',
+    desc: 'Red River District club — goth nights, indie and local showcases.',
+    address: '711 Red River St, Austin, TX 78701',
+    hours: 'Rotating lineup · see live calendar',
+    price: 'varies',
+    era: 'Live Venue',
+    tags: ['Red River', 'Goth', 'Indie', 'Venue', 'Live Music']
+  },
+  {
+    id: 'full-court-hou',
+    cat: 'thrift',
+    name: 'Full Court Classics',
+    city: 'Houston',
+    state: 'TX',
+    ph: '✿',
+    desc: 'Vintage sportswear & Y2K jerseys — peak nostalgic 90s/2000s athletic wear.',
+    address: 'Full Court Classics, Houston, TX',
+    hours: 'Check socials for current hours',
+    price: '$$',
+    era: 'Y2K / Sportswear',
+    tags: ['Y2K', 'Sportswear', 'Vintage Tees']
+  },
+  {
+    id: 'pavement-hou',
+    cat: 'thrift',
+    name: 'Pavement',
+    city: 'Houston',
+    state: 'TX',
+    ph: '✿',
+    desc: 'Heights favorite to buy/sell/trade; its RePaved line reworks secondhand pieces.',
+    address: '350 W 19th St, Houston, TX 77008',
+    hours: 'Check socials for current hours',
+    price: '$$',
+    era: 'Buy/Sell/Trade',
+    tags: ['Buy Sell Trade', 'Vintage', 'Heights']
+  },
+  {
+    id: 'lofi-vintage-hou',
+    cat: 'thrift',
+    name: 'Lo-Fi Vintage',
+    city: 'Houston',
+    state: 'TX',
+    ph: '✿',
+    desc: 'Montrose spot loaded with vintage band tees — Morrissey, Stones, Floyd and more.',
+    address: 'Lo-Fi Vintage, Montrose, Houston, TX',
+    hours: 'Check socials for current hours',
+    price: '$$',
+    era: 'Band Tees',
+    tags: ['Band Tees', 'Vintage', 'Montrose']
+  },
+  {
+    id: 'daytripper-hou',
+    cat: 'thrift',
+    name: 'Daytripper Vintage',
+    city: 'Houston',
+    state: 'TX',
+    ph: '✿',
+    desc: 'Graphic tees and \'60s–\'70s pieces for the retro digger.',
+    address: 'Daytripper Vintage, Houston, TX',
+    hours: 'Check socials for current hours',
+    price: '$$',
+    era: '\'60s–\'70s',
+    tags: ['Graphic Tees', 'Vintage', 'Retro']
+  },
+  {
+    id: 'value-village-hou',
+    cat: 'thrift',
+    name: 'Value Village Texas',
+    city: 'Houston',
+    state: 'TX',
+    ph: '✿',
+    desc: 'Sprawling aisles and legendary 3-for-$1 racks — a true dig-for-treasure warehouse.',
+    address: 'Value Village, Houston, TX',
+    hours: 'Mon–Sun, see store',
+    price: '$',
+    era: 'All Eras',
+    tags: ['Thrift Dig', 'Bargains']
+  },
+  {
+    id: 'add-vintage-dal',
+    cat: 'thrift',
+    name: 'Add Vintage',
+    city: 'Dallas',
+    state: 'TX',
+    ph: '✿',
+    desc: 'Curated Deep Ellum vintage — concert tees and old-school jackets.',
+    address: '111 Murray St, Dallas, TX 75226',
+    hours: 'Check socials for current hours',
+    price: '$$',
+    era: 'Concert Tees',
+    tags: ['Deep Ellum', 'Vintage', 'Band Tees']
+  },
+  {
+    id: 'dated-faded-dal',
+    cat: 'thrift',
+    name: 'Dated Faded Worn Vintage',
+    city: 'Dallas',
+    state: 'TX',
+    ph: '✿',
+    desc: 'Early-2000s sports & band tees plus 80s/90s vintage in Deep Ellum.',
+    address: '2924 Main St #103, Dallas, TX 75226',
+    hours: 'Check socials for current hours',
+    price: '$$',
+    era: 'Y2K / 90s',
+    tags: ['Deep Ellum', 'Y2K', 'Sports Tees']
+  },
+  {
+    id: 'dolly-python-dal',
+    cat: 'thrift',
+    name: 'Dolly Python',
+    city: 'Dallas',
+    state: 'TX',
+    ph: '✿',
+    desc: 'Beloved vintage emporium — clothes, hats, jewelry and cowboy boots.',
+    address: '1916 N Haskell Ave, Dallas, TX 75204',
+    hours: 'Check socials for current hours',
+    price: '$$',
+    era: 'Vintage / Western',
+    tags: ['Vintage', 'Cowboy Boots', 'Jewelry']
+  },
+  {
+    id: 'buffalo-exchange-dal',
+    cat: 'thrift',
+    name: 'Buffalo Exchange',
+    city: 'Dallas',
+    state: 'TX',
+    ph: '✿',
+    desc: 'Funky up-to-date resale with 90s & Y2K styles; buy, sell, trade.',
+    address: '3424 Greenville Ave, Dallas, TX 75206',
+    hours: 'Check socials for current hours',
+    price: '$$',
+    era: '90s / Y2K',
+    tags: ['Buy Sell Trade', 'Y2K', 'Vintage']
+  },
+  {
+    id: 'flea-style-dal',
+    cat: 'thrift',
+    name: 'Flea Style',
+    city: 'Dallas',
+    state: 'TX',
+    ph: '✿',
+    desc: 'Vintage clothing, handmade goods and indie designer pieces in Deep Ellum.',
+    address: 'Flea Style, Deep Ellum, Dallas, TX',
+    hours: 'Check socials for current hours',
+    price: '$$',
+    era: 'Boho / Indie',
+    tags: ['Deep Ellum', 'Boho', 'Handmade']
+  },
+  {
+    id: 'venue-white-oak-hou',
+    cat: 'show',
+    name: 'White Oak Music Hall',
+    city: 'Houston',
+    state: 'TX',
+    venue: 'White Oak Music Hall',
+    link: 'https://whiteoakmusichall.com/',
+    ph: '♫',
+    desc: 'Houston’s premier indie/rock room with indoor halls + an outdoor lawn.',
+    address: '2915 N Main St, Houston, TX 77009',
+    hours: 'Rotating lineup · see live calendar',
+    price: 'varies',
+    era: 'Live Venue',
+    tags: ['Indie', 'Rock', 'Venue', 'Live Music']
+  },
+  {
+    id: 'venue-warehouse-live-hou',
+    cat: 'show',
+    name: 'Warehouse Live Midtown',
+    city: 'Houston',
+    state: 'TX',
+    venue: 'Warehouse Live Midtown',
+    ph: '♫',
+    desc: 'Midtown multi-room venue for rock, hip-hop and heavy touring acts.',
+    address: '2600 Travis St, Houston, TX 77006',
+    hours: 'Rotating lineup · see live calendar',
+    price: 'varies',
+    era: 'Live Venue',
+    tags: ['Rock', 'Hip-Hop', 'Venue', 'Live Music']
+  },
+  {
+    id: 'venue-numbers-hou',
+    cat: 'show',
+    name: 'Numbers Nightclub',
+    city: 'Houston',
+    state: 'TX',
+    venue: 'Numbers Nightclub',
+    link: 'https://numbersnightclub.com/',
+    ph: '♫',
+    desc: 'Legendary Montrose club — famous Friday goth/industrial & new-wave nights.',
+    address: '300 Westheimer Rd, Houston, TX 77006',
+    hours: 'Rotating lineup · see live calendar',
+    price: 'varies',
+    era: 'Live Venue',
+    tags: ['Goth', 'Industrial', '80s', 'Venue', 'Live Music']
+  },
+  {
+    id: 'venue-trees-dal',
+    cat: 'show',
+    name: 'Trees',
+    city: 'Dallas',
+    state: 'TX',
+    venue: 'Trees',
+    link: 'https://treesdallas.com/',
+    ph: '♫',
+    desc: 'Iconic Deep Ellum club — rock, metal, hip-hop and punk since 1990.',
+    address: '2709 Elm St, Dallas, TX 75226',
+    hours: 'Rotating lineup · see live calendar',
+    price: 'varies',
+    era: 'Live Venue',
+    tags: ['Deep Ellum', 'Rock', 'Metal', 'Venue', 'Live Music']
+  },
+  {
+    id: 'venue-granada-dal',
+    cat: 'show',
+    name: 'Granada Theater',
+    city: 'Dallas',
+    state: 'TX',
+    venue: 'Granada Theater',
+    link: 'https://www.granadatheater.com/',
+    ph: '♫',
+    desc: 'Restored Lowest Greenville movie palace turned premier indie concert hall.',
+    address: '3524 Greenville Ave, Dallas, TX 75206',
+    hours: 'Rotating lineup · see live calendar',
+    price: 'varies',
+    era: 'Live Venue',
+    tags: ['Indie', 'Rock', 'Venue', 'Live Music']
+  },
+  {
+    id: 'venue-club-dada-dal',
+    cat: 'show',
+    name: 'Club Dada',
+    city: 'Dallas',
+    state: 'TX',
+    venue: 'Club Dada',
+    ph: '♫',
+    desc: 'Deep Ellum mainstay with an indoor stage + beloved outdoor patio.',
+    address: '2720 Elm St, Dallas, TX 75226',
+    hours: 'Rotating lineup · see live calendar',
+    price: 'varies',
+    era: 'Live Venue',
+    tags: ['Deep Ellum', 'Indie', 'Local', 'Venue', 'Live Music']
+  },
+  {
+    id: 'venue-dea-co-dal',
+    cat: 'show',
+    name: 'Deep Ellum Art Company',
+    city: 'Dallas',
+    state: 'TX',
+    venue: 'Deep Ellum Art Company',
+    ph: '♫',
+    desc: 'Art gallery + music venue with murals, patio and all-genre bills.',
+    address: '3200 Commerce St, Dallas, TX 75226',
+    hours: 'Rotating lineup · see live calendar',
+    price: 'varies',
+    era: 'Live Venue',
+    tags: ['Deep Ellum', 'Eclectic', 'Local', 'Venue', 'Live Music']
+  },
 ];
 
 const grid = document.getElementById('grid');
@@ -1692,6 +2217,9 @@ let dateSort = null;     // null | 'asc' (soonest first) | 'desc' (latest first)
 let showSavedOnly = false;
 let countPrev = 0;       // last displayed find count (for the roll animation)
 let weekOnly = false;    // "this week" quick filter
+let tonightOnly = false; // "tonight" quick filter
+let galleryView = false; // flyer-wall view
+const venueSel = document.getElementById('venueSel');
 let savedIds = new Set(JSON.parse(localStorage.getItem('dreamscape_watchlist') || '[]'));
 
 const CAT_LABELS = { thrift: '✿ THRIFT & VINTAGE', show: '♫ SHOW & CONCERT', event: '✦ SURREAL EVENT' };
@@ -1713,19 +2241,26 @@ function toggleSave(id, e) {
 function buildCityOptions() {
   const st = stateSel.value;
   const cities = [...new Set(DATA.filter(d => d.state === st).map(d => d.city))].sort();
-  citySel.innerHTML = '<option value="all">All Cities</option>' + 
+  citySel.innerHTML = '<option value="all">All Cities</option>' +
     cities.map(c => `<option value="${c}">${c}</option>`).join('');
+  const venues = [...new Set(DATA.filter(d => d.state === st && d.venue).map(d => d.venue))].sort();
+  venueSel.innerHTML = '<option value="all">All Venues</option>' +
+    venues.map(v => `<option value="${v}">${v}</option>`).join('');
 }
 
 function getItems() {
-  const st = stateSel.value, city = citySel.value, q = searchBox.value.trim().toLowerCase();
+  const st = stateSel.value, city = citySel.value, venue = venueSel.value, q = searchBox.value.trim().toLowerCase();
   return DATA.filter(d => {
     if (d.state !== st) return false;
     if (activeCat !== 'all' && d.cat !== activeCat) return false;
     if (city !== 'all' && d.city !== city) return false;
+    if (venue !== 'all' && d.venue !== venue) return false;
     if (activeTag && !(d.tags || []).includes(activeTag)) return false;
+    // auto-hide past dated shows (unless you're browsing a specific calendar date)
+    if (!activeDate) { const du = daysUntil(d); if (du !== null && du < 0) return false; }
     if (activeDate && !itemOnDate(d, activeDate.m, activeDate.d)) return false;
     if (weekOnly) { const du = daysUntil(d); if (du === null || du < 0 || du > 7) return false; }
+    if (tonightOnly) { if (daysUntil(d) !== 0) return false; }
     if (showSavedOnly && !savedIds.has(d.id)) return false;
     if (q) {
       const text = (d.name + ' ' + d.desc + ' ' + d.city + ' ' + (d.venue||'') + ' ' + (d.tags||[]).join(' ')).toLowerCase();
@@ -1999,6 +2534,38 @@ function svgPlaceholder(cat) {
 
 const NOT_FOUND = 'images/not-found.png';   // 404 fallback image
 
+// download an .ics calendar file for a dated find
+function addToCalendar(id) {
+  const d = DATA.find(x => x.id === id); if (!d) return;
+  const t = itemTime(d); if (t === null) return;
+  const start = new Date(t);
+  const tm = /(\d{1,2}):(\d{2})\s*(AM|PM)/i.exec(d.date || '');
+  if (tm) { let h = +tm[1] % 12; if (/pm/i.test(tm[3])) h += 12; start.setHours(h, +tm[2]); }
+  else start.setHours(20, 0);
+  const end = new Date(start.getTime() + 3 * 3600e3);
+  const fmt = dt => dt.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+  const esc = s => (s || '').replace(/[,;\\]/g, '\\$&').replace(/\n/g, '\\n');
+  const ics = [
+    'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Dreamscape Finder//EN', 'BEGIN:VEVENT',
+    'UID:' + d.id + '@dreamscape', 'DTSTAMP:' + fmt(new Date()),
+    'DTSTART:' + fmt(start), 'DTEND:' + fmt(end),
+    'SUMMARY:' + esc(d.name), 'LOCATION:' + esc((d.venue ? d.venue + ', ' : '') + d.address),
+    'DESCRIPTION:' + esc(d.desc + (d.link ? '\nTickets: ' + d.link : '')),
+    'END:VEVENT', 'END:VCALENDAR'
+  ].join('\r\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([ics], { type: 'text/calendar' }));
+  a.download = d.id + '.ics'; a.click(); URL.revokeObjectURL(a.href);
+}
+
+// copy a deep link to this find to the clipboard
+function shareFind(id, btn) {
+  const url = location.href.split('#')[0] + '#find=' + encodeURIComponent(id);
+  const done = () => { if (btn) { const o = btn.innerHTML; btn.innerHTML = '✓ LINK COPIED'; setTimeout(() => btn.innerHTML = o, 1500); } };
+  if (navigator.clipboard) navigator.clipboard.writeText(url).then(done, () => prompt('Copy this link:', url));
+  else prompt('Copy this link:', url);
+}
+
 // resolve a find's photo once (direct img → wikipedia → address map → 404), cache it
 async function resolvePhoto(d) {
   if (d._photo !== undefined) return d._photo;
@@ -2046,8 +2613,9 @@ resetBtn.addEventListener('click', () => {
   activeTag = null;
   activeDate = null;
   dateSort = null;
-  weekOnly = false;
-  weekBtn.classList.remove('active');
+  weekOnly = false; tonightOnly = false;
+  weekBtn.classList.remove('active'); tonightBtn.classList.remove('active');
+  venueSel.value = 'all';
   updateSortBtn();
   tagActiveDot.classList.remove('on');
   dateActiveDot.classList.remove('on');
@@ -2061,12 +2629,31 @@ resetBtn.addEventListener('click', () => {
 // date sort toggle
 sortBtn.addEventListener('click', cycleSort);
 
-// "this week" quick filter
+// venue filter
+venueSel.addEventListener('change', render);
+
+// "this week" / "tonight" quick filters
 const weekBtn = document.getElementById('weekBtn');
 weekBtn.addEventListener('click', () => {
   weekOnly = !weekOnly;
+  if (weekOnly) { tonightOnly = false; tonightBtn.classList.remove('active'); }
   weekBtn.classList.toggle('active', weekOnly);
   render();
+});
+const tonightBtn = document.getElementById('tonightBtn');
+tonightBtn.addEventListener('click', () => {
+  tonightOnly = !tonightOnly;
+  if (tonightOnly) { weekOnly = false; weekBtn.classList.remove('active'); }
+  tonightBtn.classList.toggle('active', tonightOnly);
+  render();
+});
+
+// flyer-wall (gallery) view toggle
+const galleryBtn = document.getElementById('galleryBtn');
+galleryBtn.addEventListener('click', () => {
+  galleryView = !galleryView;
+  galleryBtn.classList.toggle('active', galleryView);
+  grid.classList.toggle('gallery', galleryView);
 });
 
 // calendar wiring
@@ -2163,6 +2750,8 @@ async function openModal(d) {
     <div class="modal-actions">
       ${d.link ? `<a class="modal-btn" href="${d.link}" target="_blank" rel="noopener">🎟 TICKET PAGE</a>` : ''}
       <a class="modal-btn" href="${mapsUrl}" target="_blank" rel="noopener">📍 MAP DIRECTIONS</a>
+      ${itemTime(d) !== null ? `<button class="modal-btn" onclick="addToCalendar('${d.id}')">📆 ADD TO CALENDAR</button>` : ''}
+      <button class="modal-btn" onclick="shareFind('${d.id}', this)">🔗 SHARE</button>
       <button class="modal-btn secondary" onclick="toggleSave('${d.id}'); this.innerHTML = savedIds.has('${d.id}') ? '★ SAVED' : '☆ SAVE WATCHLIST';">
         ${saved ? '★ SAVED WATCHLIST' : '☆ SAVE WATCHLIST'}
       </button>
@@ -2326,6 +2915,16 @@ document.getElementById('gbSign').addEventListener('click', () => {
   renderGuestbook();
 });
 renderGuestbook();
+
+/* ═══ SUBMIT A SPOT (prefilled email) ═══ */
+document.getElementById('submitSpot').addEventListener('click', () => {
+  const subject = encodeURIComponent('Dreamscape Finder — new spot suggestion');
+  const body = encodeURIComponent(
+    'Suggest a place/show/event for Dreamscape Finder:\n\n' +
+    'Name:\nCategory (thrift / show / event):\nCity:\nAddress:\nDate & time (if a show/event):\nWebsite or ticket link:\nWhy it rules:\n'
+  );
+  location.href = `mailto:aquafinaa2121@gmail.com?subject=${subject}&body=${body}`;
+});
 </script>
 </body>
 </html>

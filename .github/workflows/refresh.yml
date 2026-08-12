@@ -1,0 +1,37 @@
+name: Refresh Paper Tiger shows
+
+on:
+  schedule:
+    - cron: "0 13 * * 1"     # every Monday ~7am Central
+  workflow_dispatch:          # lets you run it manually from the Actions tab
+
+permissions:
+  contents: write             # allow the bot to commit the update
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install deps
+        run: pip install beautifulsoup4
+
+      - name: Scrape + update listings
+        run: python3 scripts/refresh_paper_tiger.py
+
+      - name: Commit changes if any
+        run: |
+          git config user.name  "dreamscape-bot"
+          git config user.email "actions@users.noreply.github.com"
+          if [ -n "$(git status --porcelain index.html)" ]; then
+            git add index.html
+            git commit -m "chore: weekly Paper Tiger refresh [skip ci]"
+            git push
+          else
+            echo "No changes to commit."
+          fi
