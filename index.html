@@ -107,7 +107,7 @@
     background: var(--panel-dark);
     border: 2px solid var(--border-purple);
     border-radius: 10px; padding: 12px 18px; margin-bottom: 24px;
-    display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between;
+    display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: flex-start;
     box-shadow: 4px 4px 0px #000000;
   }
 
@@ -430,21 +430,12 @@
     color: var(--text-white);
     font-size: 13px;
   }
-  /* faint white film grain */
-  body::before {
-    content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 9998; opacity: .05;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  }
   /* dark vignette framing the page */
   body::after {
     content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0;
     box-shadow: inset 0 0 170px 44px #000;
   }
   .wrap { position: relative; z-index: 2; max-width: 1100px; }
-
-  /* moving grunge scribbles → white */
-  .bg-motif { color: #fff; opacity: .13; }
-  .bg-scanbar { background: linear-gradient(90deg, transparent, #fff, transparent); box-shadow: 0 0 12px rgba(255,255,255,.4); }
 
   /* modules: black boxes with thin grey border */
   .card, header.zine-header, .deck-toolbar, .modal-box, .empty-box, .tag-drawer, .modal-info-group {
@@ -457,15 +448,25 @@
   .card:hover { transform: none; background: #0a0a0a !important; border-color: #fff !important; }
   .card-body::before, .card-body::after { display: none; }  /* drop cyber brackets */
 
-  /* faint thumbnail behind each tile */
+  /* faint thumbnail behind each tile — VHS treatment */
   .card-photo {
     position: absolute; inset: 0; z-index: 0; pointer-events: none;
     background-size: cover; background-position: center;
-    opacity: 0; filter: grayscale(1) contrast(1.05) brightness(.85);
-    transition: opacity .4s ease;
+    opacity: 0;
+    filter: grayscale(1) contrast(1.05) brightness(.82) blur(1.4px)
+            drop-shadow(1.2px 0 rgba(0,190,255,.22)) drop-shadow(-1.2px 0 rgba(255,40,90,.22));
+    transform: scale(1.04);   /* hide blur edges */
+    transition: opacity .4s ease, filter .3s ease;
   }
-  .card-photo.on { opacity: .34; }
-  .card:hover .card-photo.on { opacity: .5; }
+  .card-photo.on { opacity: .32; }
+  .card:hover .card-photo.on { opacity: .48; filter: grayscale(1) contrast(1.1) brightness(.9) blur(1px) drop-shadow(1.4px 0 rgba(0,190,255,.28)) drop-shadow(-1.4px 0 rgba(255,40,90,.28)); }
+  /* VHS scanlines + a soft vignette over the photo */
+  .card-photo::after {
+    content: ''; position: absolute; inset: 0; pointer-events: none;
+    background:
+      repeating-linear-gradient(0deg, rgba(0,0,0,0) 0 2px, rgba(0,0,0,.28) 2px 3px),
+      radial-gradient(120% 90% at 50% 50%, transparent 55%, rgba(0,0,0,.5) 100%);
+  }
   .card-top-bar, .card-body { position: relative; z-index: 1; }
 
   /* white myspace nav strip */
@@ -547,123 +548,110 @@
   .empty-box { border-style: dashed !important; }
   ::selection { background: #fff; color: #000; }
 
+  /* tools row under the category tabs */
+  .tools-row { display: flex; flex-wrap: wrap; gap: 10px; margin: -12px 0 24px; }
+  .tools-row .btn { flex: 0 1 auto; }
+  @media (max-width: 560px) { .tools-row .btn { flex: 1 1 auto; justify-content: center; } }
+
+  /* animated find count (rolls up when rising, down when falling) */
+  .cnum { display: inline-block; min-width: 1.4em; text-align: center; }
+  .cnum.roll-up   { animation: rollUp .48s cubic-bezier(.2,.7,.3,1); }
+  .cnum.roll-down { animation: rollDown .48s cubic-bezier(.2,.7,.3,1); }
+  @keyframes rollUp   { from { transform: translateY(14px); opacity: .15; } to { transform: translateY(0); opacity: 1; } }
+  @keyframes rollDown { from { transform: translateY(-14px); opacity: .15; } to { transform: translateY(0); opacity: 1; } }
+
+  /* ═══ Calendar: browse by date ═══ */
+  #dateActiveDot { display: none; width: 8px; height: 8px; border-radius: 50%; background: var(--acid); margin-left: 8px; vertical-align: middle; box-shadow: 0 0 8px var(--acid); }
+  #dateActiveDot.on { display: inline-block; }
+  .cal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,.82); backdrop-filter: blur(4px);
+    z-index: 10001; display: none; align-items: center; justify-content: center; padding: 18px;
+  }
+  .cal-overlay.open { display: flex; }
+  .cal-box {
+    background: #000; border: 1px solid var(--line); width: 100%; max-width: 460px;
+    max-height: 90vh; overflow-y: auto; position: relative; padding: 20px;
+  }
+  .cal-x { position: absolute; top: 12px; right: 12px; background: #fff; color: #000; border: 1px solid #000; width: 30px; height: 30px; cursor: pointer; font-family: 'Silkscreen', monospace; }
+  .cal-topbar { margin-bottom: 16px; }
+  .cal-title { font-family: 'Silkscreen', monospace; font-size: 14px; color: #fff; letter-spacing: 1px; }
+  .cal-months { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .cal-month {
+    background: #000; border: 1px solid var(--line); color: var(--text-muted); cursor: pointer;
+    font-family: 'Share Tech Mono', monospace; font-size: 13px; padding: 14px 0; text-align: center; transition: all .12s;
+  }
+  .cal-month:hover { background: #fff; color: #000; border-color: #fff; }
+  .cal-month.has { color: #fff; border-color: #fff; }
+  .cal-month.has b { color: var(--acid); font-weight: normal; }
+  .cal-month.empty { opacity: .35; cursor: default; }
+  .cal-month.empty:hover { background: #000; color: var(--text-muted); border-color: var(--line); }
+
+  .cal-back { background: none; border: 1px solid var(--line); color: #fff; cursor: pointer; font-family: 'Share Tech Mono', monospace; font-size: 11px; padding: 6px 12px; margin-bottom: 14px; }
+  .cal-back:hover { background: #fff; color: #000; }
+  .cal-weekhead { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; margin-bottom: 6px; }
+  .cal-weekhead span { text-align: center; font-size: 9px; color: var(--text-muted); font-family: 'Silkscreen', monospace; }
+  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
+  .cal-day {
+    aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    background: #000; border: 1px solid #1c1c1c; color: #3a3a3a; font-family: 'Share Tech Mono', monospace; font-size: 13px;
+  }
+  .cal-day.blank { border: 0; background: transparent; }
+  .cal-day.has { color: #fff; border-color: var(--line); cursor: pointer; position: relative; }
+  .cal-day.has:hover, .cal-day.sel { background: #fff; color: #000; border-color: #fff; }
+  .cal-day .cnt { font-size: 8px; color: var(--acid); font-family: 'Silkscreen', monospace; margin-top: 2px; }
+  .cal-day.has:hover .cnt, .cal-day.sel .cnt { color: #000; }
+  .cal-hint { font-size: 11px; color: var(--text-muted); margin-top: 12px; text-align: center; }
+  .cal-clear {
+    width: 100%; margin-top: 16px; background: #000; border: 1px solid var(--line); color: var(--text-muted);
+    cursor: pointer; font-family: 'Share Tech Mono', monospace; font-size: 12px; padding: 9px 0;
+  }
+  .cal-clear:hover { background: #fff; color: #000; border-color: #fff; }
+
   /* ═══════════════════════════════════════════════
-     MOVING BACKGROUND SCENE  ·  drifting dossier motifs
+     BACKGROUND  ·  dense grunge zine collage wallpaper
      ═══════════════════════════════════════════════ */
-  .bg-scene {
-    position: fixed; inset: 0; z-index: 1; pointer-events: none; overflow: hidden;
+  .bg-scene { position: fixed; inset: 0; z-index: 1; pointer-events: none; overflow: hidden; }
+  .bg-collage {
+    position: absolute; inset: -8%;
+    background: url('images/collage-bg.png') center / cover no-repeat;
+    opacity: .5;
+    animation: collageDrift 46s ease-in-out infinite alternate, collageGlitch 8s steps(1) infinite;
   }
-  .bg-motif { position: absolute; color: var(--line); opacity: .16; }
-  .bg-motif svg { display: block; width: 100%; height: 100%; }
-
-  .bg-circuit { top: 6%;  right: 4%;  width: 300px; height: 300px; animation: driftA 34s ease-in-out infinite; }
-  .bg-wave    { bottom: 8%; right: 6%; width: 340px; height: 120px; opacity: .2; animation: driftB 28s ease-in-out infinite; }
-  .bg-print   { top: 34%; left: 3%;   width: 180px; height: 230px; animation: pulseGlow 12s ease-in-out infinite; }
-  .bg-pixels  { bottom: 14%; left: 8%; width: 140px; height: 200px; opacity: .14; animation: floatUp 22s ease-in-out infinite; }
-  .bg-eye     { top: 12%; left: 6%;   width: 240px; height: 150px; opacity: .12; animation: driftA 40s ease-in-out infinite reverse; }
-
-  /* a bright scan bar that sweeps down only now and then */
-  .bg-scanbar {
-    position: absolute; left: 0; width: 100%; height: 2px;
-    background: linear-gradient(90deg, transparent, var(--line), transparent);
-    opacity: 0; box-shadow: 0 0 12px var(--glow); animation: scanSweep 15s linear infinite;
+  /* a second, offset copy adds depth + slow parallax */
+  .bg-collage.two {
+    inset: -14%; opacity: .22; mix-blend-mode: screen;
+    background-position: 30% 60%; background-size: 150%;
+    animation: collageDrift2 60s ease-in-out infinite alternate;
   }
-
-  /* the wave "signal" scrolls along its own path */
-  .bg-wave path { stroke-dasharray: 8 6; animation: dash 3s linear infinite; }
-
-  @keyframes driftA {
-    0%, 62% { transform: translate(0,0); }
-    80% { transform: translate(-14px, 12px) rotate(-1deg); }
-    100% { transform: translate(0,0); }
+  @keyframes collageDrift {
+    from { transform: scale(1.05) translate(-1.2%, -1%); }
+    to   { transform: scale(1.14) translate(1.2%, 1.5%); }
   }
-  @keyframes driftB {
-    0%, 55% { transform: translate(0,0); }
-    78% { transform: translate(18px, -10px); }
-    100% { transform: translate(0,0); }
+  @keyframes collageDrift2 {
+    from { transform: scale(1.1) translate(1.5%, 1%) rotate(.4deg); }
+    to   { transform: scale(1.2) translate(-1.5%, -1.5%) rotate(-.4deg); }
   }
-  @keyframes pulseGlow {
-    0%, 100% { opacity: .10; }
-    50% { opacity: .22; }
-  }
-  @keyframes floatUp {
-    0%, 60% { transform: translateY(0); }
-    100% { transform: translateY(-26px); }
-  }
-  @keyframes dash { to { stroke-dashoffset: -28; } }
-  @keyframes scanSweep {
-    0%, 68% { transform: translateY(-4vh); opacity: 0; }
-    70% { opacity: .55; }
-    92% { transform: translateY(104vh); opacity: .3; }
-    94%, 100% { opacity: 0; }
+  @keyframes collageGlitch {
+    0%, 92%, 100% { opacity: .5; }
+    93% { opacity: .34; transform: translateX(-3px) scale(1.1); }
+    94% { opacity: .6; }
+    95% { opacity: .42; transform: translateX(3px) scale(1.1); }
+    96% { opacity: .52; }
   }
 
-  @media (prefers-reduced-motion: reduce) {
-    .bg-scene * { animation: none !important; }
-  }
-  @media (max-width: 560px) {
-    .bg-circuit, .bg-eye { display: none; }   /* keep phones light */
-    .bg-motif { opacity: .12; }
-  }
+  @media (prefers-reduced-motion: reduce) { .bg-scene * { animation: none !important; } }
+  @media (max-width: 560px) { .bg-collage { opacity: .42; } .bg-collage.two { display: none; } }
+
+  /* let the collage bleed through the chrome; keep listing cards solid + readable */
+  header.zine-header, .deck-toolbar { background: rgba(0,0,0,.52) !important; backdrop-filter: blur(1px); }
 </style>
 </head>
 <body>
 
-<!-- ═══ Moving Background Scene ═══ -->
+<!-- ═══ Background: grunge zine collage wallpaper ═══ -->
 <div class="bg-scene" aria-hidden="true">
-  <!-- scribble tangle · top right -->
-  <div class="bg-motif bg-circuit">
-    <svg viewBox="0 0 200 200" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round">
-      <path d="M20 40C60 10 90 70 130 30S180 90 150 120 90 100 70 140 120 170 170 150"/>
-      <path d="M10 90C50 60 40 130 100 110S150 40 190 80 140 160 90 150 30 120 60 80"/>
-      <path d="M40 20C30 80 110 60 100 130S30 150 80 190"/>
-      <path d="M160 20C140 70 190 100 150 150 110 180 170 190 190 160"/>
-    </svg>
-  </div>
-
-  <!-- scribble tangle · bottom right -->
-  <div class="bg-motif bg-wave">
-    <svg viewBox="0 0 340 120" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round">
-      <path d="M10 60C60 20 90 100 150 70S220 20 280 60 320 110 330 80"/>
-      <path d="M20 90C80 60 60 30 130 40S200 100 260 70 300 30 335 55"/>
-      <path d="M10 30C70 50 120 10 180 40S250 90 320 50"/>
-    </svg>
-  </div>
-
-  <!-- scribble tangle · left -->
-  <div class="bg-motif bg-print">
-    <svg viewBox="0 0 100 130" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round">
-      <path d="M20 10C10 40 60 30 50 70S10 100 40 125"/>
-      <path d="M70 15C50 45 90 55 70 90 50 120 90 120 85 100"/>
-      <path d="M15 60C45 50 35 90 75 80"/>
-      <path d="M30 30C55 25 45 55 80 45"/>
-    </svg>
-  </div>
-
-  <!-- scribble ball · lower left -->
-  <div class="bg-motif bg-pixels">
-    <svg viewBox="0 0 70 100" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round">
-      <path d="M15 20C40 5 30 45 55 35S60 70 35 65 5 55 25 40 55 55 40 85"/>
-      <path d="M20 50C45 40 25 75 55 70"/>
-      <path d="M10 70C35 60 30 90 60 85"/>
-    </svg>
-  </div>
-
-  <!-- scribble tangle · upper left -->
-  <div class="bg-motif bg-eye">
-    <svg viewBox="0 0 200 120" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round">
-      <path d="M10 40C50 10 60 80 110 50S180 20 195 70 130 110 90 90 30 100 60 60"/>
-      <path d="M20 80C70 60 100 30 150 60 190 82 160 100 120 95"/>
-    </svg>
-  </div>
-
-  <div class="bg-scanbar"></div>
-</div>
-
-<!-- ═══ MySpace-style nav ═══ -->
-<div class="osd-top-bar">
-  <div><span style="font-weight:bold;">dreamscape</span><span style="font-weight:normal;">-TX</span></div>
-  <div class="ms-nav"><span>Home</span><span>Browse</span><span>Find Finds</span><span>Shows</span><span>Thrift</span><span>More ▾</span></div>
+  <div class="bg-collage"></div>
+  <div class="bg-collage two"></div>
 </div>
 
 <div class="wrap">
@@ -687,9 +675,6 @@
     </button>
     <button class="btn" id="savedFilterBtn">
       <span>★ MY WATCHLIST (<span id="savedCount">0</span>)</span>
-    </button>
-    <button class="btn" id="tagsBtn">
-      <span># TAGS<span id="tagActiveDot"></span></span>
     </button>
   </div>
 
@@ -721,6 +706,19 @@
     <button class="tab-btn" data-cat="event">✦ SURREAL EVENTS</button>
   </div>
 
+  <!-- ═══ Tools row (calendar / tags / sort) ═══ -->
+  <div class="tools-row">
+    <button class="btn" id="calendarBtn">
+      <span>Calendar📅<span id="dateActiveDot"></span></span>
+    </button>
+    <button class="btn" id="tagsBtn">
+      <span># TAGS<span id="tagActiveDot"></span></span>
+    </button>
+    <button class="btn" id="sortBtn">
+      <span>↕ SORT: DATE</span>
+    </button>
+  </div>
+
   <p class="count-banner" id="countBanner"></p>
 
   <!-- ═══ Card Grid ═══ -->
@@ -748,6 +746,24 @@
   <p class="drawer-sub">Tap a tag to filter finds. Tap again to clear.</p>
   <div class="tag-bar" id="tagBar"></div>
 </aside>
+
+<!-- ═══ Calendar (browse by date) ═══ -->
+<div class="cal-overlay" id="calOverlay">
+  <div class="cal-box">
+    <button class="cal-x" id="calClose">✕</button>
+    <div class="cal-topbar">
+      <span class="cal-title" id="calTitle">PICK A MONTH · 2026</span>
+    </div>
+    <div class="cal-months" id="calMonths"></div>
+    <div class="cal-daysview" id="calDaysView" style="display:none;">
+      <button class="cal-back" id="calBack">‹ ALL MONTHS</button>
+      <div class="cal-weekhead"><span>SUN</span><span>MON</span><span>TUE</span><span>WED</span><span>THU</span><span>FRI</span><span>SAT</span></div>
+      <div class="cal-grid" id="calDays"></div>
+      <p class="cal-hint">Highlighted days have shows · tap one to filter</p>
+    </div>
+    <button class="cal-clear" id="calClear">✕ CLEAR DATE FILTER</button>
+  </div>
+</div>
 
 <!-- ═══ Detail Modal ═══ -->
 <div class="overlay" id="overlay">
@@ -951,51 +967,6 @@ const DATA = [
     tags: ['Psych Rock', 'Red River', 'Visuals']
   },
   {
-    id: 'paper-tiger-sa', cat: 'show', name: 'Fevr + Holy Wire + Death Palmz', city: 'San Antonio', state: 'TX', date: 'AUG 19 · 8:00 PM', ph: '♫',
-    img: 'images/FEVR.png',
-    desc: "Fevr with Vick Vapors, Holy Wire and Death Palmz — post-punk synthwave night at Paper Tiger on the St. Mary's strip, SA's beloved DIY venue.",
-    venue: 'Paper Tiger',
-    address: "2410 N St Mary's St, San Antonio, TX 78212",
-    hours: 'Doors 7:00 PM · Show 8:00 PM',
-    price: '$20+', era: 'Post-Punk / Synth',
-    tags: ['Paper Tiger', 'Post-Punk', 'Synth', 'St. Marys Strip']
-  },
-  {
-    id: 'emarosa-pt', cat: 'show', name: 'Emarosa', city: 'San Antonio', state: 'TX', date: 'AUG 21 · 7:30 PM', wiki: 'Emarosa', ph: '♫',
-    desc: 'Post-hardcore-turned-pop favorites Emarosa bring the emotional bangers to Paper Tiger.',
-    venue: 'Paper Tiger', address: "2410 N St Mary's St, San Antonio, TX 78212",
-    hours: 'Show 7:30 PM', price: '$$', era: 'Post-Hardcore / Emo',
-    tags: ['Paper Tiger', 'Emo', 'Post-Hardcore', 'St. Marys Strip']
-  },
-  {
-    id: 'unsane-pt', cat: 'show', name: 'Unsane', city: 'San Antonio', state: 'TX', date: 'SEP 9 · 8:00 PM', wiki: 'Unsane', ph: '♫',
-    desc: 'NYC noise-rock legends Unsane grind through Paper Tiger — sludgy, loud, unrelenting.',
-    venue: 'Paper Tiger', address: "2410 N St Mary's St, San Antonio, TX 78212",
-    hours: 'Show 8:00 PM', price: '$$', era: 'Noise Rock',
-    tags: ['Paper Tiger', 'Noise Rock', 'Punk', 'St. Marys Strip']
-  },
-  {
-    id: 'soulfly-pt', cat: 'show', name: 'Soulfly', city: 'San Antonio', state: 'TX', date: 'SEP 22 · 7:00 PM', wiki: 'Soulfly', ph: '♫',
-    desc: 'Max Cavalera brings the tribal-metal riffage of Soulfly to Paper Tiger.',
-    venue: 'Paper Tiger', address: "2410 N St Mary's St, San Antonio, TX 78212",
-    hours: 'Show 7:00 PM', price: '$$', era: 'Metal',
-    tags: ['Paper Tiger', 'Metal', 'Heavy', 'St. Marys Strip']
-  },
-  {
-    id: 'built-to-spill-pt', cat: 'show', name: 'Built To Spill', city: 'San Antonio', state: 'TX', date: 'SEP 24 · 8:00 PM', wiki: 'Built_to_Spill', ph: '♫',
-    desc: 'Indie-rock icons Built To Spill w/ Paul Schalda — fuzzy guitars and heart at Paper Tiger.',
-    venue: 'Paper Tiger', address: "2410 N St Mary's St, San Antonio, TX 78212",
-    hours: 'Show 8:00 PM', price: '$$', era: '90s Indie Rock',
-    tags: ['Paper Tiger', 'Indie Rock', 'Alt', 'St. Marys Strip']
-  },
-  {
-    id: 'menzingers-pt', cat: 'show', name: 'The Menzingers + Hot Water Music', city: 'San Antonio', state: 'TX', date: 'SEP 25 · 7:00 PM', wiki: 'The_Menzingers', ph: '♫',
-    desc: 'The Menzingers with Hot Water Music and Weakened Friends — a punk-rock triple bill for the ages at Paper Tiger.',
-    venue: 'Paper Tiger', address: "2410 N St Mary's St, San Antonio, TX 78212",
-    hours: 'Show 7:00 PM', price: '$$', era: 'Punk / Emo',
-    tags: ['Paper Tiger', 'Punk', 'Emo', 'St. Marys Strip']
-  },
-  {
     id: 'emo-prom-mix', cat: 'show', name: 'Puro Emo: Emo Prom', city: 'San Antonio', state: 'TX', date: 'AUG 8 · 9:00 PM', ph: '♫',
     img: 'images/emo-prom.jpg',
     desc: 'Emo Prom with Dennis Lee + Shawn Milke (Alesana) spinning all your 2000s emo anthems. Dress your blackest.',
@@ -1055,7 +1026,545 @@ const DATA = [
     hours: 'Screenings morning → 3:00 AM daily',
     price: '$$$', era: 'Cult Horror / Sci-Fi',
     tags: ['Genre Film', 'Horror', 'Alamo Drafthouse']
-  }
+  },
+  {
+    id: 'pt-aug14-spike-hellis', cat: 'show', name: 'Spike Hellis', city: 'San Antonio', state: 'TX', date: 'AUG 14 · 8:30 PM', ph: '♫',
+    link: 'https://wl.seetickets.us/event/spike-hellis/689354?afflky=PaperTiger',
+    img: 'https://prod-images.seetickets.us/eyJidWNrZXQiOiJwcm9kLXNpaC5zZWV0aWNrZXRzdXNhLnVzIiwia2V5IjoiNmE1ZjllYTEtOGQ1YS00MzUwLTgyOGMtNjVkZjNlMmVhNDU3IiwiZWRpdHMiOnsicmVzaXplIjp7IndpZHRoIjo2MDB9LCJqcGVnIjp7InF1YWxpdHkiOjYwfSwicG5nIjp7ImNvbXByZXNzaW9uTGV2ZWwiOjksInF1YWxpdHkiOjYwfSwid2VicCI6eyJxdWFsaXR5Ijo2MH19fQ==',
+    desc: 'With Street Sex, Auragraph. Live at Paper Tiger on the St. Mary\'s strip — SA\'s beloved DIY venue.',
+    venue: 'Paper Tiger', address: "2410 N St Mary's St, San Antonio, TX 78212",
+    hours: 'Doors 8:00 PM · Show 8:30 PM', price: '$$', era: 'Live @ Paper Tiger',
+    tags: ['Paper Tiger', 'St. Marys Strip', 'Live Music']
+  },
+  {
+    id: 'pt-aug14-blade-rave', cat: 'show', name: 'Blade Rave', city: 'San Antonio', state: 'TX', date: 'AUG 14 · 9:00 PM', ph: '♫',
+    link: 'https://wl.seetickets.us/event/blade-rave/694037?afflky=PaperTiger',
+    img: 'https://prod-images.seetickets.us/eyJidWNrZXQiOiJwcm9kLXNpaC5zZWV0aWNrZXRzdXNhLnVzIiwia2V5IjoiOTc1YjJmYTYtNjM3Mi00Mjg0LWI1ZTItYTFiNTYwNGM4MDM0IiwiZWRpdHMiOnsicmVzaXplIjp7IndpZHRoIjo2MDB9LCJqcGVnIjp7InF1YWxpdHkiOjYwfSwicG5nIjp7ImNvbXByZXNzaW9uTGV2ZWwiOjksInF1YWxpdHkiOjYwfSwid2VicCI6eyJxdWFsaXR5Ijo2MH19fQ==',
+    desc: 'Live at Paper Tiger on the St. Mary\'s strip — SA\'s beloved DIY venue.',
+    venue: 'Paper Tiger', address: "2410 N St Mary's St, San Antonio, TX 78212",
+    hours: 'Doors 8:00 PM · Show 9:00 PM', price: '$$', era: 'Live @ Paper Tiger',
+    tags: ['Paper Tiger', 'St. Marys Strip', 'Live Music']
+  },
+  {
+    id: 'pt-aug15-floats', cat: 'show', name: 'Floats', city: 'San Antonio', state: 'TX', date: 'AUG 15 · 8:00 PM', ph: '♫',
+    link: 'https://wl.seetickets.us/event/floats/690019?afflky=PaperTiger',
+    img: 'https://prod-images.seetickets.us/eyJidWNrZXQiOiJwcm9kLXNpaC5zZWV0aWNrZXRzdXNhLnVzIiwia2V5IjoiMzUyNDk5ZmEtMDY0MC00NjZjLWJmZGYtNjcwNzM2NGM5MDM3IiwiZWRpdHMiOnsicmVzaXplIjp7IndpZHRoIjo2MDB9LCJqcGVnIjp7InF1YWxpdHkiOjYwfSwicG5nIjp7ImNvbXByZXNzaW9uTGV2ZWwiOjksInF1YWxpdHkiOjYwfSwid2VicCI6eyJxdWFsaXR5Ijo2MH19fQ==',
+    desc: 'With Famous Friend, The Citie, Pet Peeves. Live at Paper Tiger on the St. Mary\'s strip — SA\'s beloved DIY venue.',
+    venue: 'Paper Tiger', address: "2410 N St Mary's St, San Antonio, TX 78212",
+    hours: 'Doors 7:00 PM · Show 8:00 PM', price: '$$', era: 'Live @ Paper Tiger',
+    tags: ['Paper Tiger', 'St. Marys Strip', 'Live Music']
+  },
+  {
+    id: 'pt-aug15-damon-r-empty-shell-casing', cat: 'show', name: 'Damon R, Empty Shell Casing', city: 'San Antonio', state: 'TX', date: 'AUG 15 · 8:00 PM', ph: '♫',
+    link: 'https://wl.seetickets.us/event/damon-r-empty-shell-casing/698808?afflky=PaperTiger',
+    img: 'https://prod-images.seetickets.us/eyJidWNrZXQiOiJwcm9kLXNpaC5zZWV0aWNrZXRzdXNhLnVzIiwia2V5IjoiMzBhNGFkYjItMzViZi00NzYwLTkxYmMtYWM2ODY5ODhlNGEyIiwiZWRpdHMiOnsicmVzaXplIjp7IndpZHRoIjo2MDB9LCJqcGVnIjp7InF1YWxpdHkiOjYwfSwicG5nIjp7ImNvbXByZXNzaW9uTGV2ZWwiOjksInF1YWxpdHkiOjYwfSwid2VicCI6eyJxdWFsaXR5Ijo2MH19fQ==',
+    desc: 'With Merkaba, Petrol3ra. Live at Paper Tiger on the St. Mary\'s strip — SA\'s beloved DIY venue.',
+    venue: 'Paper Tiger', address: "2410 N St Mary's St, San Antonio, TX 78212",
+    hours: 'Doors 7:00 PM · Show 8:00 PM', price: '$$', era: 'Live @ Paper Tiger',
+    tags: ['Paper Tiger', 'St. Marys Strip', 'Live Music']
+  },
+  {
+    id: 'pt-aug17-royal-coda', cat: 'show', name: 'Royal Coda', city: 'San Antonio', state: 'TX', date: 'AUG 17 · 7:00 PM', ph: '♫',
+    link: 'https://www.eventim.us/event/tickets/690834',
+    img: 'https://prod-images.seetickets.us/eyJidWNrZXQiOiJwcm9kLXNpaC5zZWV0aWNrZXRzdXNhLnVzIiwia2V5IjoiOWJiYTM4OTAtZmRjNC00OGZmLWE3ZDItNmQ4MTNhMWRhMjAzIiwiZWRpdHMiOnsicmVzaXplIjp7IndpZHRoIjo2MDB9LCJqcGVnIjp7InF1YWxpdHkiOjYwfSwicG5nIjp7ImNvbXByZXNzaW9uTGV2ZWwiOjksInF1YWxpdHkiOjYwfSwid2VicCI6eyJxdWFsaXR5Ijo2MH19fQ==',
+    desc: 'Live at Paper Tiger on the St. Mary\'s strip — SA\'s beloved DIY venue.',
+    venue: 'Paper Tiger', address: "2410 N St Mary's St, San Antonio, TX 78212",
+    hours: 'Doors 6:00 PM · Show 7:00 PM', price: '$$', era: 'Live @ Paper Tiger',
+    tags: ['Paper Tiger', 'St. Marys Strip', 'Live Music']
+  },
+  {
+    id: 'pt-aug19-fevr', cat: 'show', name: 'Fevr', city: 'San Antonio', state: 'TX', date: 'AUG 19 · 8:00 PM', ph: '♫',
+    link: 'https://wl.seetickets.us/event/fevr/691119?afflky=PaperTiger',
+    img: 'https://prod-images.seetickets.us/eyJidWNrZXQiOiJwcm9kLXNpaC5zZWV0aWNrZXRzdXNhLnVzIiwia2V5IjoiNDU1NmJiMmYtOTFlNS00YmZmLTgxNzktOWNjNDJiMWZlNjAyIiwiZWRpdHMiOnsicmVzaXplIjp7IndpZHRoIjo2MDB9LCJqcGVnIjp7InF1YWxpdHkiOjYwfSwicG5nIjp7ImNvbXByZXNzaW9uTGV2ZWwiOjksInF1YWxpdHkiOjYwfSwid2VicCI6eyJxdWFsaXR5Ijo2MH19fQ==',
+    desc: 'With Vick Vapors, Holy Wire, Death Palmz. Live at Paper Tiger on the St. Mary\'s strip — SA\'s beloved DIY venue.',
+    venue: 'Paper Tiger', address: "2410 N St Mary's St, San Antonio, TX 78212",
+    hours: 'Doors 7:00 PM · Show 8:00 PM', price: '$$', era: 'Live @ Paper Tiger',
+    tags: ['Paper Tiger', 'St. Marys Strip', 'Live Music']
+  },
+  {
+    id: 'pt-aug20-la-noche-del-tigre', cat: 'show', name: 'La Noche Del Tigre', city: 'San Antonio', state: 'TX', date: 'AUG 20 · 7:00 PM', ph: '♫',
+    link: 'https://wl.seetickets.us/event/la-noche-del-tigre/698035?afflky=PaperTiger',
+    img: 'https://prod-images.seetickets.us/eyJidWNrZXQiOiJwcm9kLXNpaC5zZWV0aWNrZXRzdXNhLnVzIiwia2V5IjoiMzdjYTM0Y2MtZTNiNi00MThmLTg3YTQtNDhjZTYxY2MwYjJiIiwiZWRpdHMiOnsicmVzaXplIjp7IndpZHRoIjo2MDB9LCJqcGVnIjp7InF1YWxpdHkiOjYwfSwicG5nIjp7ImNvbXByZXNzaW9uTGV2ZWwiOjksInF1YWxpdHkiOjYwfSwid2VicCI6eyJxdWFsaXR5Ijo2MH19fQ==',
+    desc: 'With Eric Tessmer, Sana Sana, James Bullard, Chris Tellez, Nacya Marreiro. Live at Paper Tiger on the St. Mary\'s strip — SA\'s beloved DIY venue.',
+    venue: 'Paper Tiger', address: "2410 N St Mary's St, San Antonio, TX 78212",
+    hours: 'Doors 6:00 PM · Show 7:00 PM', price: '$$', era: 'Live @ Paper Tiger',
+    tags: ['Paper Tiger', 'St. Marys Strip', 'Live Music']
+  },
+  {
+    id: 'pt-aug20-sherane-concealer', cat: 'show', name: 'Sherane & Concealer', city: 'San Antonio', state: 'TX', date: 'AUG 20 · 7:00 PM', ph: '♫',
+    link: 'https://www.eventim.us/event/tickets/696978',
+    img: 'https://prod-images.seetickets.us/eyJidWNrZXQiOiJwcm9kLXNpaC5zZWV0aWNrZXRzdXNhLnVzIiwia2V5IjoiNTcwN2Y1YmUtYWJlOS00NGEzLThhYTAtYTA2NTlhYjY3YjVjIiwiZWRpdHMiOnsicmVzaXplIjp7IndpZHRoIjo2MDB9LCJqcGVnIjp7InF1YWxpdHkiOjYwfSwicG5nIjp7ImNvbXByZXNzaW9uTGV2ZWwiOjksInF1YWxpdHkiOjYwfSwid2VicCI6eyJxdWFsaXR5Ijo2MH19fQ==',
+    desc: 'With FEAR OF LOSS, Get Me The Knife, katywentmissing. Live at Paper Tiger on the St. Mary\'s strip — SA\'s beloved DIY venue.',
+    venue: 'Paper Tiger', address: "2410 N St Mary's St, San Antonio, TX 78212",
+    hours: 'Doors 6:00 PM · Show 7:00 PM', price: '$$', era: 'Live @ Paper Tiger',
+    tags: ['Paper Tiger', 'St. Marys Strip', 'Live Music']
+  },
+  {
+    id: 'pt-aug21-emarosa-presents-high-horse-', cat: 'show', name: 'Emarosa presents: High Horse Heaven Tour', city: 'San Antonio', state: 'TX', date: 'AUG 21 · 7:30 PM', wiki: 'Emarosa', ph: '♫',
+    link: 'https://wl.seetickets.us/event/emarosa-presents-high-horse-heaven-tour/688686?afflky=PaperTiger',
+    img: 'https://prod-images.seetickets.us/eyJidWNrZXQiOiJwcm9kLXNpaC5zZWV0aWNrZXRzdXNhLnVzIiwia2V5IjoiOWY0YWRhZmEtNjZmMC00OTNiLWI5MDAtMWEyMjlhM2Q3ZTU3IiwiZWRpdHMiOnsicmVzaXplIjp7IndpZHRoIjo2MDB9LCJqcGVnIjp7InF1YWxpdHkiOjYwfSwicG5nIjp7ImNvbXByZXNzaW9uTGV2ZWwiOjksInF1YWxpdHkiOjYwfSwid2VicCI6eyJxdWFsaXR5Ijo2MH19fQ==',
+    desc: 'With Veaux, slo/tide, dreamfone. Live at Paper Tiger on the St. Mary\'s strip — SA\'s beloved DIY venue.',
+    venue: 'Paper Tiger', address: "2410 N St Mary's St, San Antonio, TX 78212",
+    hours: 'Doors 6:30 PM · Show 7:30 PM', price: '$$', era: 'Live @ Paper Tiger',
+    tags: ['Paper Tiger', 'St. Marys Strip', 'Live Music']
+  },
+  {
+    id: 'pt-aug21-jackson-marshall', cat: 'show', name: 'Jackson Marshall', city: 'San Antonio', state: 'TX', date: 'AUG 21 · 8:00 PM', ph: '♫',
+    link: 'https://wl.seetickets.us/event/jackson-marshall/694197?afflky=PaperTiger',
+    img: 'https://prod-images.seetickets.us/eyJidWNrZXQiOiJwcm9kLXNpaC5zZWV0aWNrZXRzdXNhLnVzIiwia2V5IjoiN2NkZTQ3MmItOWJiOS00NzhjLWEzNjgtYTZkOTg4MTYzMzkzIiwiZWRpdHMiOnsicmVzaXplIjp7IndpZHRoIjo2MDB9LCJqcGVnIjp7InF1YWxpdHkiOjYwfSwicG5nIjp7ImNvbXByZXNzaW9uTGV2ZWwiOjksInF1YWxpdHkiOjYwfSwid2VicCI6eyJxdWFsaXR5Ijo2MH19fQ==',
+    desc: 'Live at Paper Tiger on the St. Mary\'s strip — SA\'s beloved DIY venue.',
+    venue: 'Paper Tiger', address: "2410 N St Mary's St, San Antonio, TX 78212",
+    hours: 'Doors 7:00 PM · Show 8:00 PM', price: '$$', era: 'Live @ Paper Tiger',
+    tags: ['Paper Tiger', 'St. Marys Strip', 'Live Music']
+  },
+  {
+    id: 'pt-aug22-sweet-pill', cat: 'show', name: 'Sweet Pill', city: 'San Antonio', state: 'TX', date: 'AUG 22 · 8:00 PM', ph: '♫',
+    link: 'https://wl.seetickets.us/event/sweet-pill/691670?afflky=PaperTiger',
+    img: 'https://prod-images.seetickets.us/eyJidWNrZXQiOiJwcm9kLXNpaC5zZWV0aWNrZXRzdXNhLnVzIiwia2V5IjoiMjU0YTNmNTYtMTViYS00OTUyLWJhOTAtODY1NmVmNjA2MTFhIiwiZWRpdHMiOnsicmVzaXplIjp7IndpZHRoIjo2MDB9LCJqcGVnIjp7InF1YWxpdHkiOjYwfSwicG5nIjp7ImNvbXByZXNzaW9uTGV2ZWwiOjksInF1YWxpdHkiOjYwfSwid2VicCI6eyJxdWFsaXR5Ijo2MH19fQ==',
+    desc: 'With Deux Visages, Bike Routes. Live at Paper Tiger on the St. Mary\'s strip — SA\'s beloved DIY venue.',
+    venue: 'Paper Tiger', address: "2410 N St Mary's St, San Antonio, TX 78212",
+    hours: 'Doors 7:00 PM · Show 8:00 PM', price: '$$', era: 'Live @ Paper Tiger',
+    tags: ['Paper Tiger', 'St. Marys Strip', 'Live Music']
+  },
+  {
+    id: 'pt-aug22-shutupcicada', cat: 'show', name: 'ShutupCicada', city: 'San Antonio', state: 'TX', date: 'AUG 22 · 8:00 PM', ph: '♫',
+    link: 'https://wl.seetickets.us/event/shutupcicada/700337?afflky=PaperTiger',
+    img: 'https://prod-images.seetickets.us/eyJidWNrZXQiOiJwcm9kLXNpaC5zZWV0aWNrZXRzdXNhLnVzIiwia2V5IjoiNGNmODQyZmQtOTYyOC00MDU4LTk5MjMtZjFiNGRlMzI5YzA5IiwiZWRpdHMiOnsicmVzaXplIjp7IndpZHRoIjo2MDB9LCJqcGVnIjp7InF1YWxpdHkiOjYwfSwicG5nIjp7ImNvbXByZXNzaW9uTGV2ZWwiOjksInF1YWxpdHkiOjYwfSwid2VicCI6eyJxdWFsaXR5Ijo2MH19fQ==',
+    desc: 'With Confessions of Cain, Rat House, Blurred Beauty. Live at Paper Tiger on the St. Mary\'s strip — SA\'s beloved DIY venue.',
+    venue: 'Paper Tiger', address: "2410 N St Mary's St, San Antonio, TX 78212",
+    hours: 'Doors 7:00 PM · Show 8:00 PM', price: '$$', era: 'Live @ Paper Tiger',
+    tags: ['Paper Tiger', 'St. Marys Strip', 'Live Music']
+  },
+  {
+    id: 'pt-aug23-the-missing-peace-x-blanket', cat: 'show', name: 'The Missing Peace x Blanket', city: 'San Antonio', state: 'TX', date: 'AUG 23 · 8:00 PM', ph: '♫',
+    link: 'https://wl.seetickets.us/event/the-missing-peace-x-blanket/690617?afflky=PaperTiger',
+    img: 'https://prod-images.seetickets.us/eyJidWNrZXQiOiJwcm9kLXNpaC5zZWV0aWNrZXRzdXNhLnVzIiwia2V5IjoiYTgyM2QyYTUtNWU2Mi00MDJiLWFhYmYtMDI0Mjk5NWUzMWRmIiwiZWRpdHMiOnsicmVzaXplIjp7IndpZHRoIjo2MDB9LCJqcGVnIjp7InF1YWxpdHkiOjYwfSwicG5nIjp7ImNvbXByZXNzaW9uTGV2ZWwiOjksInF1YWxpdHkiOjYwfSwid2VicCI6eyJxdWFsaXR5Ijo2MH19fQ==',
+    desc: 'With Day Aches, Gloom. Live at Paper Tiger on the St. Mary\'s strip — SA\'s beloved DIY venue.',
+    venue: 'Paper Tiger', address: "2410 N St Mary's St, San Antonio, TX 78212",
+    hours: 'Doors 7:00 PM · Show 8:00 PM', price: '$$', era: 'Live @ Paper Tiger',
+    tags: ['Paper Tiger', 'St. Marys Strip', 'Live Music']
+  },
+  {
+    id: 'pt-aug24-ella-red', cat: 'show', name: 'Ella Red', city: 'San Antonio', state: 'TX', date: 'AUG 24 · 8:00 PM', ph: '♫',
+    link: 'https://wl.seetickets.us/event/ella-red/688707?afflky=PaperTiger',
+    img: 'https://prod-images.seetickets.us/eyJidWNrZXQiOiJwcm9kLXNpaC5zZWV0aWNrZXRzdXNhLnVzIiwia2V5IjoiYzM2NDE2MDktNjAxNS00YWNhLWI1OGMtNjMxZDZhOGVkODk4IiwiZWRpdHMiOnsicmVzaXplIjp7IndpZHRoIjo2MDB9LCJqcGVnIjp7InF1YWxpdHkiOjYwfSwicG5nIjp7ImNvbXByZXNzaW9uTGV2ZWwiOjksInF1YWxpdHkiOjYwfSwid2VicCI6eyJxdWFsaXR5Ijo2MH19fQ==',
+    desc: 'With Zoe Ko, Remy Reilly. Live at Paper Tiger on the St. Mary\'s strip — SA\'s beloved DIY venue.',
+    venue: 'Paper Tiger', address: "2410 N St Mary's St, San Antonio, TX 78212",
+    hours: 'Doors 7:00 PM · Show 8:00 PM', price: '$$', era: 'Live @ Paper Tiger',
+    tags: ['Paper Tiger', 'St. Marys Strip', 'Live Music']
+  },
+  {
+    id: 'pt-aug27-royale-lynn', cat: 'show', name: 'Royale Lynn', city: 'San Antonio', state: 'TX', date: 'AUG 27 · 8:00 AM', ph: '♫',
+    link: 'https://wl.seetickets.us/event/royale-lynn/690034?afflky=PaperTiger',
+    img: 'https://prod-images.seetickets.us/eyJidWNrZXQiOiJwcm9kLXNpaC5zZWV0aWNrZXRzdXNhLnVzIiwia2V5IjoiNmI0YjZiMWMtNWEwZC00MjIwLTk4NDItOGUyYzc2MmM2ODNkIiwiZWRpdHMiOnsicmVzaXplIjp7IndpZHRoIjo2MDB9LCJqcGVnIjp7InF1YWxpdHkiOjYwfSwicG5nIjp7ImNvbXByZXNzaW9uTGV2ZWwiOjksInF1YWxpdHkiOjYwfSwid2VicCI6eyJxdWFsaXR5Ijo2MH19fQ==',
+    desc: 'With Pretty Pity. Live at Paper Tiger on the St. Mary\'s strip — SA\'s beloved DIY venue.',
+    venue: 'Paper Tiger', address: "2410 N St Mary's St, San Antonio, TX 78212",
+    hours: 'Doors 7:00 PM · Show 8:00 AM', price: '$$', era: 'Live @ Paper Tiger',
+    tags: ['Paper Tiger', 'St. Marys Strip', 'Live Music']
+  },
+  {
+    id: 'pt-aug28-decaine', cat: 'show', name: 'Decaine', city: 'San Antonio', state: 'TX', date: 'AUG 28 · 8:00 PM', ph: '♫',
+    link: 'https://wl.seetickets.us/event/decaine/693471?afflky=PaperTiger',
+    img: 'https://prod-images.seetickets.us/eyJidWNrZXQiOiJwcm9kLXNpaC5zZWV0aWNrZXRzdXNhLnVzIiwia2V5IjoiY2NhNjUxNGMtOWY1Ni00MTVhLWJhM2UtZWUzNzFmMWY1N2RmIiwiZWRpdHMiOnsicmVzaXplIjp7IndpZHRoIjo2MDB9LCJqcGVnIjp7InF1YWxpdHkiOjYwfSwicG5nIjp7ImNvbXByZXNzaW9uTGV2ZWwiOjksInF1YWxpdHkiOjYwfSwid2VicCI6eyJxdWFsaXR5Ijo2MH19fQ==',
+    desc: 'With Toothpick, Maybe in the Next Life, Slip Dress. Live at Paper Tiger on the St. Mary\'s strip — SA\'s beloved DIY venue.',
+    venue: 'Paper Tiger', address: "2410 N St Mary's St, San Antonio, TX 78212",
+    hours: 'Doors 7:00 PM · Show 8:00 PM', price: '$$', era: 'Live @ Paper Tiger',
+    tags: ['Paper Tiger', 'St. Marys Strip', 'Live Music']
+  },
+  {
+    id: 'pt-aug28-bitter-end', cat: 'show', name: 'Bitter End', city: 'San Antonio', state: 'TX', date: 'AUG 28 · 8:00 PM', ph: '♫',
+    link: 'https://wl.seetickets.us/event/bitter-end/700274?afflky=PaperTiger',
+    img: 'https://prod-images.seetickets.us/eyJidWNrZXQiOiJwcm9kLXNpaC5zZWV0aWNrZXRzdXNhLnVzIiwia2V5IjoiMWUzMzAxNDctZWM4Zi00ZmE5LTlmNTEtZTgxMzljODUzMTdkIiwiZWRpdHMiOnsicmVzaXplIjp7IndpZHRoIjo2MDB9LCJqcGVnIjp7InF1YWxpdHkiOjYwfSwicG5nIjp7ImNvbXByZXNzaW9uTGV2ZWwiOjksInF1YWxpdHkiOjYwfSwid2VicCI6eyJxdWFsaXR5Ijo2MH19fQ==',
+    desc: 'With Ivy League TX, Hardside, Sanity Slip, Nemesis, Tiger Splitter. Live at Paper Tiger on the St. Mary\'s strip — SA\'s beloved DIY venue.',
+    venue: 'Paper Tiger', address: "2410 N St Mary's St, San Antonio, TX 78212",
+    hours: 'Doors 7:00 PM · Show 8:00 PM', price: '$$', era: 'Live @ Paper Tiger',
+    tags: ['Paper Tiger', 'St. Marys Strip', 'Live Music']
+  },
+  {
+    id: 'pt-aug29-black-pontiac', cat: 'show', name: 'Black Pontiac', city: 'San Antonio', state: 'TX', date: 'AUG 29 · 8:00 PM', ph: '♫',
+    link: 'https://wl.seetickets.us/event/black-pontiac/696013?afflky=PaperTiger',
+    img: 'https://prod-images.seetickets.us/eyJidWNrZXQiOiJwcm9kLXNpaC5zZWV0aWNrZXRzdXNhLnVzIiwia2V5IjoiMmI2MTU4Y2QtNjg3Yi00NmE2LWE2YjItOGY0ODJlMWEzODhiIiwiZWRpdHMiOnsicmVzaXplIjp7IndpZHRoIjo2MDB9LCJqcGVnIjp7InF1YWxpdHkiOjYwfSwicG5nIjp7ImNvbXByZXNzaW9uTGV2ZWwiOjksInF1YWxpdHkiOjYwfSwid2VicCI6eyJxdWFsaXR5Ijo2MH19fQ==',
+    desc: 'Live at Paper Tiger on the St. Mary\'s strip — SA\'s beloved DIY venue.',
+    venue: 'Paper Tiger', address: "2410 N St Mary's St, San Antonio, TX 78212",
+    hours: 'Doors 7:00 PM · Show 8:00 PM', price: '$$', era: 'Live @ Paper Tiger',
+    tags: ['Paper Tiger', 'St. Marys Strip', 'Live Music']
+  },
+  {
+    id: 'pt-aug29-system-of-a-brown', cat: 'show', name: 'System of a Brown', city: 'San Antonio', state: 'TX', date: 'AUG 29 · 10:00 PM', ph: '♫',
+    link: 'https://wl.seetickets.us/event/system-of-a-brown/700861?afflky=PaperTiger',
+    img: 'https://prod-images.seetickets.us/eyJidWNrZXQiOiJwcm9kLXNpaC5zZWV0aWNrZXRzdXNhLnVzIiwia2V5IjoiODBlNjRhYTgtNDc3OC00NWYxLWJmMzctZjMyZTUwNGNjN2NlIiwiZWRpdHMiOnsicmVzaXplIjp7IndpZHRoIjo2MDB9LCJqcGVnIjp7InF1YWxpdHkiOjYwfSwicG5nIjp7ImNvbXByZXNzaW9uTGV2ZWwiOjksInF1YWxpdHkiOjYwfSwid2VicCI6eyJxdWFsaXR5Ijo2MH19fQ==',
+    desc: 'Live at Paper Tiger on the St. Mary\'s strip — SA\'s beloved DIY venue.',
+    venue: 'Paper Tiger', address: "2410 N St Mary's St, San Antonio, TX 78212",
+    hours: 'Doors 9:00 PM · Show 10:00 PM', price: '$$', era: 'Live @ Paper Tiger',
+    tags: ['Paper Tiger', 'St. Marys Strip', 'Live Music']
+  },
+  {
+    id: 'pt-sep2-the-browning', cat: 'show', name: 'The Browning', city: 'San Antonio', state: 'TX', date: 'SEP 2 · 7:00 PM', ph: '♫',
+    link: 'https://www.eventim.us/event/tickets/690077',
+    img: 'https://prod-images.seetickets.us/eyJidWNrZXQiOiJwcm9kLXNpaC5zZWV0aWNrZXRzdXNhLnVzIiwia2V5IjoiZDM4M2M5NmMtYTE4Yy00NjkzLTg3ZmYtNDczYmViMmRjZjJkIiwiZWRpdHMiOnsicmVzaXplIjp7IndpZHRoIjo2MDB9LCJqcGVnIjp7InF1YWxpdHkiOjYwfSwicG5nIjp7ImNvbXByZXNzaW9uTGV2ZWwiOjksInF1YWxpdHkiOjYwfSwid2VicCI6eyJxdWFsaXR5Ijo2MH19fQ==',
+    desc: 'Live at Paper Tiger on the St. Mary\'s strip — SA\'s beloved DIY venue.',
+    venue: 'Paper Tiger', address: "2410 N St Mary's St, San Antonio, TX 78212",
+    hours: 'Doors 6:00 PM · Show 7:00 PM', price: '$$', era: 'Live @ Paper Tiger',
+    tags: ['Paper Tiger', 'St. Marys Strip', 'Live Music']
+  },
+  {
+    id: 'pt-sep2-bungalow-collect-presents-di', cat: 'show', name: 'Bungalow Collect presents Disco Rap:', city: 'San Antonio', state: 'TX', date: 'SEP 2 · 7:00 PM', ph: '♫',
+    link: 'https://wl.seetickets.us/event/bungalow-collect-presents-disco-rap/694420?afflky=PaperTiger',
+    img: 'https://prod-images.seetickets.us/eyJidWNrZXQiOiJwcm9kLXNpaC5zZWV0aWNrZXRzdXNhLnVzIiwia2V5IjoiYjBiN2MyODQtNjg0MC00YTgyLTk5ODUtYmU3OGM1NTIwNDM4IiwiZWRpdHMiOnsicmVzaXplIjp7IndpZHRoIjo2MDB9LCJqcGVnIjp7InF1YWxpdHkiOjYwfSwicG5nIjp7ImNvbXByZXNzaW9uTGV2ZWwiOjksInF1YWxpdHkiOjYwfSwid2VicCI6eyJxdWFsaXR5Ijo2MH19fQ==',
+    desc: 'Live at Paper Tiger on the St. Mary\'s strip — SA\'s beloved DIY venue.',
+    venue: 'Paper Tiger', address: "2410 N St Mary's St, San Antonio, TX 78212",
+    hours: 'Show 7:00 PM', price: '$$', era: 'Live @ Paper Tiger',
+    tags: ['Paper Tiger', 'St. Marys Strip', 'Live Music']
+  },
+  {
+    id: 'pt-sep3-the-suicide-machines', cat: 'show', name: 'The Suicide Machines', city: 'San Antonio', state: 'TX', date: 'SEP 3 · 8:00 PM', wiki: 'The_Suicide_Machines', ph: '♫',
+    link: 'https://wl.seetickets.us/event/the-suicide-machines/690308?afflky=PaperTiger',
+    img: 'https://prod-images.seetickets.us/eyJidWNrZXQiOiJwcm9kLXNpaC5zZWV0aWNrZXRzdXNhLnVzIiwia2V5IjoiY2M2NmZjMjMtOWI3NC00NDFjLTg4ZDAtYmNhYTJkZDU5ZDdjIiwiZWRpdHMiOnsicmVzaXplIjp7IndpZHRoIjo2MDB9LCJqcGVnIjp7InF1YWxpdHkiOjYwfSwicG5nIjp7ImNvbXByZXNzaW9uTGV2ZWwiOjksInF1YWxpdHkiOjYwfSwid2VicCI6eyJxdWFsaXR5Ijo2MH19fQ==',
+    desc: 'With BAD OPERATION. Live at Paper Tiger on the St. Mary\'s strip — SA\'s beloved DIY venue.',
+    venue: 'Paper Tiger', address: "2410 N St Mary's St, San Antonio, TX 78212",
+    hours: 'Doors 7:00 PM · Show 8:00 PM', price: '$$', era: 'Live @ Paper Tiger',
+    tags: ['Paper Tiger', 'St. Marys Strip', 'Live Music']
+  },
+  {
+    id: 'pt-sep3-brief-inner-mission', cat: 'show', name: 'Brief Inner Mission', city: 'San Antonio', state: 'TX', date: 'SEP 3 · 8:00 PM', ph: '♫',
+    link: 'https://wl.seetickets.us/event/brief-inner-mission/700864?afflky=PaperTiger',
+    img: 'https://prod-images.seetickets.us/eyJidWNrZXQiOiJwcm9kLXNpaC5zZWV0aWNrZXRzdXNhLnVzIiwia2V5IjoiZTMxMjRkZTYtZWQxZC00YjRkLWE1NWQtMTNjOTJiNzA2MTY1IiwiZWRpdHMiOnsicmVzaXplIjp7IndpZHRoIjo2MDB9LCJqcGVnIjp7InF1YWxpdHkiOjYwfSwicG5nIjp7ImNvbXByZXNzaW9uTGV2ZWwiOjksInF1YWxpdHkiOjYwfSwid2VicCI6eyJxdWFsaXR5Ijo2MH19fQ==',
+    desc: 'With Jane, Daycare. Live at Paper Tiger on the St. Mary\'s strip — SA\'s beloved DIY venue.',
+    venue: 'Paper Tiger', address: "2410 N St Mary's St, San Antonio, TX 78212",
+    hours: 'Doors 7:00 PM · Show 8:00 PM', price: '$$', era: 'Live @ Paper Tiger',
+    tags: ['Paper Tiger', 'St. Marys Strip', 'Live Music']
+  },
+  {
+    id: 'pt-sep4-unsane', cat: 'show', name: 'Unsane', city: 'San Antonio', state: 'TX', date: 'SEP 4 · 7:00 PM', wiki: 'Unsane', ph: '♫',
+    link: 'https://wl.seetickets.us/event/unsane/683590?afflky=PaperTiger',
+    img: 'https://prod-images.seetickets.us/eyJidWNrZXQiOiJwcm9kLXNpaC5zZWV0aWNrZXRzdXNhLnVzIiwia2V5IjoiZDM3NTgyMzktNGE1MC00Mjg3LTlmYzgtZGFiMTk4ZDc2YzJhIiwiZWRpdHMiOnsicmVzaXplIjp7IndpZHRoIjo2MDB9LCJqcGVnIjp7InF1YWxpdHkiOjYwfSwicG5nIjp7ImNvbXByZXNzaW9uTGV2ZWwiOjksInF1YWxpdHkiOjYwfSwid2VicCI6eyJxdWFsaXR5Ijo2MH19fQ==',
+    desc: 'With Fuck Money. Live at Paper Tiger on the St. Mary\'s strip — SA\'s beloved DIY venue.',
+    venue: 'Paper Tiger', address: "2410 N St Mary's St, San Antonio, TX 78212",
+    hours: 'Doors 6:00 PM · Show 7:00 PM', price: '$$', era: 'Live @ Paper Tiger',
+    tags: ['Paper Tiger', 'St. Marys Strip', 'Live Music']
+  },
+  {
+    id: 'pt-sep4-emo-nite', cat: 'show', name: 'Emo Nite', city: 'San Antonio', state: 'TX', date: 'SEP 4 · 8:00 PM', ph: '♫',
+    link: 'https://wl.seetickets.us/event/emo-nite/698055?afflky=PaperTiger',
+    img: 'https://prod-images.seetickets.us/eyJidWNrZXQiOiJwcm9kLXNpaC5zZWV0aWNrZXRzdXNhLnVzIiwia2V5IjoiZjQ3OTBjNzUtYzUzYy00NDM4LWJlMWYtYzE3NzliN2M5Y2U3IiwiZWRpdHMiOnsicmVzaXplIjp7IndpZHRoIjo2MDB9LCJqcGVnIjp7InF1YWxpdHkiOjYwfSwicG5nIjp7ImNvbXByZXNzaW9uTGV2ZWwiOjksInF1YWxpdHkiOjYwfSwid2VicCI6eyJxdWFsaXR5Ijo2MH19fQ==',
+    desc: 'Live at Paper Tiger on the St. Mary\'s strip — SA\'s beloved DIY venue.',
+    venue: 'Paper Tiger', address: "2410 N St Mary's St, San Antonio, TX 78212",
+    hours: 'Doors 7:00 PM · Show 8:00 PM', price: '$$', era: 'Live @ Paper Tiger',
+    tags: ['Paper Tiger', 'St. Marys Strip', 'Live Music']
+  },
+  {
+    id: 'pt-sep5-merauder', cat: 'show', name: 'Merauder', city: 'San Antonio', state: 'TX', date: 'SEP 5 · 6:45 PM', ph: '♫',
+    link: 'https://wl.seetickets.us/event/merauder/699165?afflky=PaperTiger',
+    img: 'https://prod-images.seetickets.us/eyJidWNrZXQiOiJwcm9kLXNpaC5zZWV0aWNrZXRzdXNhLnVzIiwia2V5IjoiMDA4ZGNhOGUtNTcyMi00ZWNjLTlkNTItZmU2ZGM3MjFlMzViIiwiZWRpdHMiOnsicmVzaXplIjp7IndpZHRoIjo2MDB9LCJqcGVnIjp7InF1YWxpdHkiOjYwfSwicG5nIjp7ImNvbXByZXNzaW9uTGV2ZWwiOjksInF1YWxpdHkiOjYwfSwid2VicCI6eyJxdWFsaXR5Ijo2MH19fQ==',
+    desc: 'With Inside You, Mongrel, Freeze Out, Nemesis, Weak Spot. Live at Paper Tiger on the St. Mary\'s strip — SA\'s beloved DIY venue.',
+    venue: 'Paper Tiger', address: "2410 N St Mary's St, San Antonio, TX 78212",
+    hours: 'Doors 6:00 PM · Show 6:45 PM', price: '$$', era: 'Live @ Paper Tiger',
+    tags: ['Paper Tiger', 'St. Marys Strip', 'Live Music']
+  },
+  {
+    id: 'pt-sep5-cult-member', cat: 'show', name: 'Cult Member', city: 'San Antonio', state: 'TX', date: 'SEP 5 · 8:00 PM', ph: '♫',
+    link: 'https://wl.seetickets.us/event/cult-member/700745?afflky=PaperTiger',
+    img: 'https://prod-images.seetickets.us/eyJidWNrZXQiOiJwcm9kLXNpaC5zZWV0aWNrZXRzdXNhLnVzIiwia2V5IjoiMmM4NWViODQtODBjOC00ZTRmLWJmYjItN2I1NzIxNjFjYWE1IiwiZWRpdHMiOnsicmVzaXplIjp7IndpZHRoIjo2MDB9LCJqcGVnIjp7InF1YWxpdHkiOjYwfSwicG5nIjp7ImNvbXByZXNzaW9uTGV2ZWwiOjksInF1YWxpdHkiOjYwfSwid2VicCI6eyJxdWFsaXR5Ijo2MH19fQ==',
+    desc: 'With 4evr (body bag). Live at Paper Tiger on the St. Mary\'s strip — SA\'s beloved DIY venue.',
+    venue: 'Paper Tiger', address: "2410 N St Mary's St, San Antonio, TX 78212",
+    hours: 'Doors 7:00 PM · Show 8:00 PM', price: '$$', era: 'Live @ Paper Tiger',
+    tags: ['Paper Tiger', 'St. Marys Strip', 'Live Music']
+  },
+  {
+    id: 'pt-sep6-shearling', cat: 'show', name: 'Shearling', city: 'San Antonio', state: 'TX', date: 'SEP 6 · 7:00 PM', ph: '♫',
+    link: 'https://wl.eventim.us/event/shearling/690949?afflky=POFTX',
+    img: 'https://prod-images.seetickets.us/eyJidWNrZXQiOiJwcm9kLXNpaC5zZWV0aWNrZXRzdXNhLnVzIiwia2V5IjoiMTJjYjUwNTMtM2Y3Ny00N2U1LWIwZjAtMWYzNWUxYjc1MjU5IiwiZWRpdHMiOnsicmVzaXplIjp7IndpZHRoIjo2MDB9LCJqcGVnIjp7InF1YWxpdHkiOjYwfSwicG5nIjp7ImNvbXByZXNzaW9uTGV2ZWwiOjksInF1YWxpdHkiOjYwfSwid2VicCI6eyJxdWFsaXR5Ijo2MH19fQ==',
+    desc: 'Live at Paper Tiger on the St. Mary\'s strip — SA\'s beloved DIY venue.',
+    venue: 'Paper Tiger', address: "2410 N St Mary's St, San Antonio, TX 78212",
+    hours: 'Doors 6:00 PM · Show 7:00 PM', price: '$$', era: 'Live @ Paper Tiger',
+    tags: ['Paper Tiger', 'St. Marys Strip', 'Live Music']
+  },
+  {
+    id: 'pt-sep10-los-eclipses', cat: 'show', name: 'Los Eclipses', city: 'San Antonio', state: 'TX', date: 'SEP 10 · 8:00 PM', ph: '♫',
+    link: 'https://wl.seetickets.us/event/los-eclipses/698539?afflky=PaperTiger',
+    img: 'https://prod-images.seetickets.us/eyJidWNrZXQiOiJwcm9kLXNpaC5zZWV0aWNrZXRzdXNhLnVzIiwia2V5IjoiOWE2Mjc0ZjAtYWEzMS00YmVkLWJkNjEtYjVlNmVmNGQ4Y2Y2IiwiZWRpdHMiOnsicmVzaXplIjp7IndpZHRoIjo2MDB9LCJqcGVnIjp7InF1YWxpdHkiOjYwfSwicG5nIjp7ImNvbXByZXNzaW9uTGV2ZWwiOjksInF1YWxpdHkiOjYwfSwid2VicCI6eyJxdWFsaXR5Ijo2MH19fQ==',
+    desc: 'Live at Paper Tiger on the St. Mary\'s strip — SA\'s beloved DIY venue.',
+    venue: 'Paper Tiger', address: "2410 N St Mary's St, San Antonio, TX 78212",
+    hours: 'Doors 7:00 PM · Show 8:00 PM', price: '$$', era: 'Live @ Paper Tiger',
+    tags: ['Paper Tiger', 'St. Marys Strip', 'Live Music']
+  },
+  {
+    id: 'pt-sep11-max-fry', cat: 'show', name: 'Max Fry', city: 'San Antonio', state: 'TX', date: 'SEP 11 · 8:00 PM', ph: '♫',
+    link: 'https://wl.seetickets.us/event/max-fry/696491?afflky=PaperTiger',
+    img: 'https://prod-images.seetickets.us/eyJidWNrZXQiOiJwcm9kLXNpaC5zZWV0aWNrZXRzdXNhLnVzIiwia2V5IjoiNjQ1ZDI2YWQtMWRjNS00NzAyLThkODItMjQ4Njc5MWZiM2IwIiwiZWRpdHMiOnsicmVzaXplIjp7IndpZHRoIjo2MDB9LCJqcGVnIjp7InF1YWxpdHkiOjYwfSwicG5nIjp7ImNvbXByZXNzaW9uTGV2ZWwiOjksInF1YWxpdHkiOjYwfSwid2VicCI6eyJxdWFsaXR5Ijo2MH19fQ==',
+    desc: 'With aWannabe. Live at Paper Tiger on the St. Mary\'s strip — SA\'s beloved DIY venue.',
+    venue: 'Paper Tiger', address: "2410 N St Mary's St, San Antonio, TX 78212",
+    hours: 'Doors 7:00 PM · Show 8:00 PM', price: '$$', era: 'Live @ Paper Tiger',
+    tags: ['Paper Tiger', 'St. Marys Strip', 'Live Music']
+  },
+  {
+    id: 'pt-sep12-sweeping-promises', cat: 'show', name: 'Sweeping Promises', city: 'San Antonio', state: 'TX', date: 'SEP 12 · 8:00 PM', wiki: 'Sweeping_Promises', ph: '♫',
+    link: 'https://wl.seetickets.us/event/sweeping-promises/691038?afflky=PaperTiger',
+    img: 'https://prod-images.seetickets.us/eyJidWNrZXQiOiJwcm9kLXNpaC5zZWV0aWNrZXRzdXNhLnVzIiwia2V5IjoiYzI4NGM3YTctNTU1NS00NDgwLWJmNmUtNDYwNjg0N2I3MTA1IiwiZWRpdHMiOnsicmVzaXplIjp7IndpZHRoIjo2MDB9LCJqcGVnIjp7InF1YWxpdHkiOjYwfSwicG5nIjp7ImNvbXByZXNzaW9uTGV2ZWwiOjksInF1YWxpdHkiOjYwfSwid2VicCI6eyJxdWFsaXR5Ijo2MH19fQ==',
+    desc: 'Live at Paper Tiger on the St. Mary\'s strip — SA\'s beloved DIY venue.',
+    venue: 'Paper Tiger', address: "2410 N St Mary's St, San Antonio, TX 78212",
+    hours: 'Doors 7:00 PM · Show 8:00 PM', price: '$$', era: 'Live @ Paper Tiger',
+    tags: ['Paper Tiger', 'St. Marys Strip', 'Live Music']
+  },
+  {
+    id: 'pt-sep13-ian-mcconnell', cat: 'show', name: 'Ian McConnell', city: 'San Antonio', state: 'TX', date: 'SEP 13 · 8:00 PM', ph: '♫',
+    link: 'https://wl.seetickets.us/event/ian-mcconnell/694436?afflky=PaperTiger',
+    img: 'https://prod-images.seetickets.us/eyJidWNrZXQiOiJwcm9kLXNpaC5zZWV0aWNrZXRzdXNhLnVzIiwia2V5IjoiZmRmM2IzNmEtMzY0Mi00NjIzLTkyMzEtNzBhMjI0ZTBkMzY5IiwiZWRpdHMiOnsicmVzaXplIjp7IndpZHRoIjo2MDB9LCJqcGVnIjp7InF1YWxpdHkiOjYwfSwicG5nIjp7ImNvbXByZXNzaW9uTGV2ZWwiOjksInF1YWxpdHkiOjYwfSwid2VicCI6eyJxdWFsaXR5Ijo2MH19fQ==',
+    desc: 'With Cherry Vance. Live at Paper Tiger on the St. Mary\'s strip — SA\'s beloved DIY venue.',
+    venue: 'Paper Tiger', address: "2410 N St Mary's St, San Antonio, TX 78212",
+    hours: 'Doors 7:00 PM · Show 8:00 PM', price: '$$', era: 'Live @ Paper Tiger',
+    tags: ['Paper Tiger', 'St. Marys Strip', 'Live Music']
+  },
+  {
+    id: 'pt-sep14-yearn-junebug', cat: 'show', name: 'yearn, junebug', city: 'San Antonio', state: 'TX', date: 'SEP 14 · 8:00 PM', ph: '♫',
+    link: 'https://wl.seetickets.us/event/yearn-junebug/702050?afflky=PaperTiger',
+    img: 'https://prod-images.seetickets.us/eyJidWNrZXQiOiJwcm9kLXNpaC5zZWV0aWNrZXRzdXNhLnVzIiwia2V5IjoiZWJiZDFiNWItZjUzYS00NzkxLWJmZTktODExN2I2MGM0ZDI0IiwiZWRpdHMiOnsicmVzaXplIjp7IndpZHRoIjo2MDB9LCJqcGVnIjp7InF1YWxpdHkiOjYwfSwicG5nIjp7ImNvbXByZXNzaW9uTGV2ZWwiOjksInF1YWxpdHkiOjYwfSwid2VicCI6eyJxdWFsaXR5Ijo2MH19fQ==',
+    desc: 'With Joseon, fawn. Live at Paper Tiger on the St. Mary\'s strip — SA\'s beloved DIY venue.',
+    venue: 'Paper Tiger', address: "2410 N St Mary's St, San Antonio, TX 78212",
+    hours: 'Doors 7:00 PM · Show 8:00 PM', price: '$$', era: 'Live @ Paper Tiger',
+    tags: ['Paper Tiger', 'St. Marys Strip', 'Live Music']
+  },
+  {
+    id: 'pt-sep15-pertinence', cat: 'show', name: 'Pertinence', city: 'San Antonio', state: 'TX', date: 'SEP 15 · 7:30 PM', ph: '♫',
+    link: 'https://wl.seetickets.us/event/pertinence/687641?afflky=PaperTiger',
+    img: 'https://prod-images.seetickets.us/eyJidWNrZXQiOiJwcm9kLXNpaC5zZWV0aWNrZXRzdXNhLnVzIiwia2V5IjoiN2Q2MmY5YjMtMzgwYS00NWI3LWI2YTYtOTlkYmNhMmE1OGRhIiwiZWRpdHMiOnsicmVzaXplIjp7IndpZHRoIjo2MDB9LCJqcGVnIjp7InF1YWxpdHkiOjYwfSwicG5nIjp7ImNvbXByZXNzaW9uTGV2ZWwiOjksInF1YWxpdHkiOjYwfSwid2VicCI6eyJxdWFsaXR5Ijo2MH19fQ==',
+    desc: 'Live at Paper Tiger on the St. Mary\'s strip — SA\'s beloved DIY venue.',
+    venue: 'Paper Tiger', address: "2410 N St Mary's St, San Antonio, TX 78212",
+    hours: 'Doors 7:00 PM · Show 7:30 PM', price: '$$', era: 'Live @ Paper Tiger',
+    tags: ['Paper Tiger', 'St. Marys Strip', 'Live Music']
+  },
+  {
+    id: 'pt-sep17-pig', cat: 'show', name: 'PIG', city: 'San Antonio', state: 'TX', date: 'SEP 17 · 8:00 PM', ph: '♫',
+    link: 'https://wl.seetickets.us/event/pig/694442?afflky=PaperTiger',
+    img: 'https://prod-images.seetickets.us/eyJidWNrZXQiOiJwcm9kLXNpaC5zZWV0aWNrZXRzdXNhLnVzIiwia2V5IjoiMTkyNzBjYWEtNWJkNS00YzQzLWFmMjktNzM1MmI0YTE0ZDEwIiwiZWRpdHMiOnsicmVzaXplIjp7IndpZHRoIjo2MDB9LCJqcGVnIjp7InF1YWxpdHkiOjYwfSwicG5nIjp7ImNvbXByZXNzaW9uTGV2ZWwiOjksInF1YWxpdHkiOjYwfSwid2VicCI6eyJxdWFsaXR5Ijo2MH19fQ==',
+    desc: 'With Cyanotic. Live at Paper Tiger on the St. Mary\'s strip — SA\'s beloved DIY venue.',
+    venue: 'Paper Tiger', address: "2410 N St Mary's St, San Antonio, TX 78212",
+    hours: 'Doors 7:00 PM · Show 8:00 PM', price: '$$', era: 'Live @ Paper Tiger',
+    tags: ['Paper Tiger', 'St. Marys Strip', 'Live Music']
+  },
+  {
+    id: 'pt-sep18-dead-eyes', cat: 'show', name: 'Dead Eyes', city: 'San Antonio', state: 'TX', date: 'SEP 18 · 7:00 PM', ph: '♫',
+    link: 'https://wl.seetickets.us/event/dead-eyes/695568?afflky=PaperTiger',
+    img: 'https://prod-images.seetickets.us/eyJidWNrZXQiOiJwcm9kLXNpaC5zZWV0aWNrZXRzdXNhLnVzIiwia2V5IjoiMGUyZjkxMjgtNTgwNy00YWI0LWEwZDAtMDM5MDQyNWZhNzNiIiwiZWRpdHMiOnsicmVzaXplIjp7IndpZHRoIjo2MDB9LCJqcGVnIjp7InF1YWxpdHkiOjYwfSwicG5nIjp7ImNvbXByZXNzaW9uTGV2ZWwiOjksInF1YWxpdHkiOjYwfSwid2VicCI6eyJxdWFsaXR5Ijo2MH19fQ==',
+    desc: 'Live at Paper Tiger on the St. Mary\'s strip — SA\'s beloved DIY venue.',
+    venue: 'Paper Tiger', address: "2410 N St Mary's St, San Antonio, TX 78212",
+    hours: 'Doors 6:00 PM · Show 7:00 PM', price: '$$', era: 'Live @ Paper Tiger',
+    tags: ['Paper Tiger', 'St. Marys Strip', 'Live Music']
+  },
+  {
+    id: 'pt-sep19-inoha', cat: 'show', name: 'INOHA', city: 'San Antonio', state: 'TX', date: 'SEP 19 · 7:30 PM', ph: '♫',
+    link: 'https://wl.seetickets.us/event/inoha/695397?afflky=PaperTiger',
+    img: 'https://prod-images.seetickets.us/eyJidWNrZXQiOiJwcm9kLXNpaC5zZWV0aWNrZXRzdXNhLnVzIiwia2V5IjoiY2FlM2U5NTctOGUwZC00NmU2LTg3MzItYjQ5ZDRiOWI2ZjM5IiwiZWRpdHMiOnsicmVzaXplIjp7IndpZHRoIjo2MDB9LCJqcGVnIjp7InF1YWxpdHkiOjYwfSwicG5nIjp7ImNvbXByZXNzaW9uTGV2ZWwiOjksInF1YWxpdHkiOjYwfSwid2VicCI6eyJxdWFsaXR5Ijo2MH19fQ==',
+    desc: 'Live at Paper Tiger on the St. Mary\'s strip — SA\'s beloved DIY venue.',
+    venue: 'Paper Tiger', address: "2410 N St Mary's St, San Antonio, TX 78212",
+    hours: 'Doors 6:30 PM · Show 7:30 PM', price: '$$', era: 'Live @ Paper Tiger',
+    tags: ['Paper Tiger', 'St. Marys Strip', 'Live Music']
+  },
+  {
+    id: 'pt-sep19-hot-flash-heat-wave', cat: 'show', name: 'Hot Flash Heat Wave', city: 'San Antonio', state: 'TX', date: 'SEP 19 · 8:00 PM', ph: '♫',
+    link: 'https://wl.seetickets.us/event/hot-flash-heat-wave/693557?afflky=PaperTiger',
+    img: 'https://prod-images.seetickets.us/eyJidWNrZXQiOiJwcm9kLXNpaC5zZWV0aWNrZXRzdXNhLnVzIiwia2V5IjoiODhlYjgzMmItYjNmZS00ODZjLWJiMjYtOTUwNGM3NGVlZDEyIiwiZWRpdHMiOnsicmVzaXplIjp7IndpZHRoIjo2MDB9LCJqcGVnIjp7InF1YWxpdHkiOjYwfSwicG5nIjp7ImNvbXByZXNzaW9uTGV2ZWwiOjksInF1YWxpdHkiOjYwfSwid2VicCI6eyJxdWFsaXR5Ijo2MH19fQ==',
+    desc: 'With Small Crush, High.. Live at Paper Tiger on the St. Mary\'s strip — SA\'s beloved DIY venue.',
+    venue: 'Paper Tiger', address: "2410 N St Mary's St, San Antonio, TX 78212",
+    hours: 'Doors 7:00 PM · Show 8:00 PM', price: '$$', era: 'Live @ Paper Tiger',
+    tags: ['Paper Tiger', 'St. Marys Strip', 'Live Music']
+  },
+  {
+    id: 'pt-sep20-born-without-bones', cat: 'show', name: 'Born Without Bones', city: 'San Antonio', state: 'TX', date: 'SEP 20 · 3:00 PM', ph: '♫',
+    link: 'https://wl.seetickets.us/event/born-without-bones/690709?afflky=PaperTiger',
+    img: 'https://prod-images.seetickets.us/eyJidWNrZXQiOiJwcm9kLXNpaC5zZWV0aWNrZXRzdXNhLnVzIiwia2V5IjoiYTUwMzc3NWQtMzAyOC00NzUxLTg1MDYtMTQ3MGI0NDU4ZTMxIiwiZWRpdHMiOnsicmVzaXplIjp7IndpZHRoIjo2MDB9LCJqcGVnIjp7InF1YWxpdHkiOjYwfSwicG5nIjp7ImNvbXByZXNzaW9uTGV2ZWwiOjksInF1YWxpdHkiOjYwfSwid2VicCI6eyJxdWFsaXR5Ijo2MH19fQ==',
+    desc: 'Live at Paper Tiger on the St. Mary\'s strip — SA\'s beloved DIY venue.',
+    venue: 'Paper Tiger', address: "2410 N St Mary's St, San Antonio, TX 78212",
+    hours: 'Doors 2:00 PM · Show 3:00 PM', price: '$$', era: 'Live @ Paper Tiger',
+    tags: ['Paper Tiger', 'St. Marys Strip', 'Live Music']
+  },
+  {
+    id: 'pt-sep20-kal-el', cat: 'show', name: 'Kal-EL', city: 'San Antonio', state: 'TX', date: 'SEP 20 · 8:00 PM', ph: '♫',
+    link: 'https://wl.seetickets.us/event/kal-el/691320?afflky=PaperTiger',
+    img: 'https://prod-images.seetickets.us/eyJidWNrZXQiOiJwcm9kLXNpaC5zZWV0aWNrZXRzdXNhLnVzIiwia2V5IjoiOTM0YmM3MGEtOWMzMy00ZjE0LWE4MTAtMDQ0ZTdlN2FjY2YyIiwiZWRpdHMiOnsicmVzaXplIjp7IndpZHRoIjo2MDB9LCJqcGVnIjp7InF1YWxpdHkiOjYwfSwicG5nIjp7ImNvbXByZXNzaW9uTGV2ZWwiOjksInF1YWxpdHkiOjYwfSwid2VicCI6eyJxdWFsaXR5Ijo2MH19fQ==',
+    desc: 'With VOLUME, Wizard. Live at Paper Tiger on the St. Mary\'s strip — SA\'s beloved DIY venue.',
+    venue: 'Paper Tiger', address: "2410 N St Mary's St, San Antonio, TX 78212",
+    hours: 'Doors 7:00 PM · Show 8:00 PM', price: '$$', era: 'Live @ Paper Tiger',
+    tags: ['Paper Tiger', 'St. Marys Strip', 'Live Music']
+  },
+  {
+    id: 'pt-sep20-allison-euforia-usa-tour', cat: 'show', name: 'Allison: Euforia USA Tour', city: 'San Antonio', state: 'TX', date: 'SEP 20 · 8:00 PM', ph: '♫',
+    link: 'https://eventim.us/Allison26',
+    img: 'https://prod-images.seetickets.us/eyJidWNrZXQiOiJwcm9kLXNpaC5zZWV0aWNrZXRzdXNhLnVzIiwia2V5IjoiNzY1MjQ0YWYtOTk3YS00NWY1LTgwOWEtZjdiNDQ1ZTQ1MDUyIiwiZWRpdHMiOnsicmVzaXplIjp7IndpZHRoIjozNjV9fX0=',
+    desc: 'With Forever Came Calling, Loser Club, Los De Esta Noche. Live at Paper Tiger on the St. Mary\'s strip — SA\'s beloved DIY venue.',
+    venue: 'Paper Tiger', address: "2410 N St Mary's St, San Antonio, TX 78212",
+    hours: 'Doors 7:00 PM · Show 8:00 PM', price: '$$', era: 'Live @ Paper Tiger',
+    tags: ['Paper Tiger', 'St. Marys Strip', 'Live Music']
+  },
+  {
+    id: 'pt-sep22-soulfly', cat: 'show', name: 'Soulfly', city: 'San Antonio', state: 'TX', date: 'SEP 22 · 7:00 PM', wiki: 'Soulfly', ph: '♫',
+    link: 'https://wl.seetickets.us/event/soulfly/698679?afflky=PaperTiger',
+    img: 'https://prod-images.seetickets.us/eyJidWNrZXQiOiJwcm9kLXNpaC5zZWV0aWNrZXRzdXNhLnVzIiwia2V5IjoiMTk0NzI0ZTgtMjlkNy00YzM0LWIxZTQtZGIwMjAzNGYxYmEzIiwiZWRpdHMiOnsicmVzaXplIjp7IndpZHRoIjo2MDB9LCJqcGVnIjp7InF1YWxpdHkiOjYwfSwicG5nIjp7ImNvbXByZXNzaW9uTGV2ZWwiOjksInF1YWxpdHkiOjYwfSwid2VicCI6eyJxdWFsaXR5Ijo2MH19fQ==',
+    desc: 'With Nailbomb, Incite. Live at Paper Tiger on the St. Mary\'s strip — SA\'s beloved DIY venue.',
+    venue: 'Paper Tiger', address: "2410 N St Mary's St, San Antonio, TX 78212",
+    hours: 'Doors 6:00 PM · Show 7:00 PM', price: '$$', era: 'Live @ Paper Tiger',
+    tags: ['Paper Tiger', 'St. Marys Strip', 'Live Music']
+  },
+  {
+    id: 'pt-sep24-built-to-spill', cat: 'show', name: 'Built to Spill', city: 'San Antonio', state: 'TX', date: 'SEP 24 · 8:00 PM', wiki: 'Built_to_Spill', ph: '♫',
+    link: 'https://wl.seetickets.us/event/built-to-spill/685647?afflky=PaperTiger',
+    img: 'https://prod-images.seetickets.us/eyJidWNrZXQiOiJwcm9kLXNpaC5zZWV0aWNrZXRzdXNhLnVzIiwia2V5IjoiMzA5MjhkNWMtOGZhMi00ZTY4LThjNmUtOTRhYWMwZTdiNGQ3IiwiZWRpdHMiOnsicmVzaXplIjp7IndpZHRoIjo2MDB9LCJqcGVnIjp7InF1YWxpdHkiOjYwfSwicG5nIjp7ImNvbXByZXNzaW9uTGV2ZWwiOjksInF1YWxpdHkiOjYwfSwid2VicCI6eyJxdWFsaXR5Ijo2MH19fQ==',
+    desc: 'With Paul Schalda. Live at Paper Tiger on the St. Mary\'s strip — SA\'s beloved DIY venue.',
+    venue: 'Paper Tiger', address: "2410 N St Mary's St, San Antonio, TX 78212",
+    hours: 'Doors 7:00 PM · Show 8:00 PM', price: '$$', era: 'Live @ Paper Tiger',
+    tags: ['Paper Tiger', 'St. Marys Strip', 'Live Music']
+  },
+  {
+    id: 'pt-sep25-the-menzingers-everything-i-', cat: 'show', name: 'The Menzingers: Everything I Ever Saw North American Tour', city: 'San Antonio', state: 'TX', date: 'SEP 25 · 7:00 PM', wiki: 'The_Menzingers', ph: '♫',
+    link: 'https://wl.seetickets.us/event/the-menzingers-everything-i-ever-saw-north-american-tour/689807?afflky=PaperTiger',
+    img: 'https://prod-images.seetickets.us/eyJidWNrZXQiOiJwcm9kLXNpaC5zZWV0aWNrZXRzdXNhLnVzIiwia2V5IjoiMWYwMTJlMjUtNTM0Zi00OTIzLWFjZTEtOTczYjE2MGRlMTkxIiwiZWRpdHMiOnsicmVzaXplIjp7IndpZHRoIjo2MDB9LCJqcGVnIjp7InF1YWxpdHkiOjYwfSwicG5nIjp7ImNvbXByZXNzaW9uTGV2ZWwiOjksInF1YWxpdHkiOjYwfSwid2VicCI6eyJxdWFsaXR5Ijo2MH19fQ==',
+    desc: 'With Hot Water Music. Live at Paper Tiger on the St. Mary\'s strip — SA\'s beloved DIY venue.',
+    venue: 'Paper Tiger', address: "2410 N St Mary's St, San Antonio, TX 78212",
+    hours: 'Doors 6:00 PM · Show 7:00 PM', price: '$$', era: 'Live @ Paper Tiger',
+    tags: ['Paper Tiger', 'St. Marys Strip', 'Live Music']
+  },
+  {
+    id: 'pt-sep25-nik-parr-the-selfless-lovers', cat: 'show', name: 'Nik Parr & The Selfless Lovers', city: 'San Antonio', state: 'TX', date: 'SEP 25 · 8:00 PM', ph: '♫',
+    link: 'https://wl.seetickets.us/event/nik-parr-and-the-selfless-lovers/695118?afflky=PaperTiger',
+    img: 'https://prod-images.seetickets.us/eyJidWNrZXQiOiJwcm9kLXNpaC5zZWV0aWNrZXRzdXNhLnVzIiwia2V5IjoiOWY3NTk5MjktMTdkOC00YTg3LWFkNjMtNDY1ZDhhZDhlN2RkIiwiZWRpdHMiOnsicmVzaXplIjp7IndpZHRoIjo2MDB9LCJqcGVnIjp7InF1YWxpdHkiOjYwfSwicG5nIjp7ImNvbXByZXNzaW9uTGV2ZWwiOjksInF1YWxpdHkiOjYwfSwid2VicCI6eyJxdWFsaXR5Ijo2MH19fQ==',
+    desc: 'Live at Paper Tiger on the St. Mary\'s strip — SA\'s beloved DIY venue.',
+    venue: 'Paper Tiger', address: "2410 N St Mary's St, San Antonio, TX 78212",
+    hours: 'Doors 7:00 PM · Show 8:00 PM', price: '$$', era: 'Live @ Paper Tiger',
+    tags: ['Paper Tiger', 'St. Marys Strip', 'Live Music']
+  },
+  {
+    id: 'pt-sep26-death-lens', cat: 'show', name: 'Death Lens', city: 'San Antonio', state: 'TX', date: 'SEP 26 · 8:00 PM', ph: '♫',
+    link: 'https://wl.seetickets.us/event/death-lens/689093?afflky=PaperTiger',
+    img: 'https://prod-images.seetickets.us/eyJidWNrZXQiOiJwcm9kLXNpaC5zZWV0aWNrZXRzdXNhLnVzIiwia2V5IjoiN2U3M2M3ZDUtODYxOS00NWYwLTkyNzgtM2Q2MWUxNjdlZTkwIiwiZWRpdHMiOnsicmVzaXplIjp7IndpZHRoIjo2MDB9LCJqcGVnIjp7InF1YWxpdHkiOjYwfSwicG5nIjp7ImNvbXByZXNzaW9uTGV2ZWwiOjksInF1YWxpdHkiOjYwfSwid2VicCI6eyJxdWFsaXR5Ijo2MH19fQ==',
+    desc: 'With The High Curbs, Chico. Live at Paper Tiger on the St. Mary\'s strip — SA\'s beloved DIY venue.',
+    venue: 'Paper Tiger', address: "2410 N St Mary's St, San Antonio, TX 78212",
+    hours: 'Doors 7:00 PM · Show 8:00 PM', price: '$$', era: 'Live @ Paper Tiger',
+    tags: ['Paper Tiger', 'St. Marys Strip', 'Live Music']
+  },
+  {
+    id: 'pt-sep26-scene-queen-metalicious', cat: 'show', name: 'Scene Queen: METALICIOUS', city: 'San Antonio', state: 'TX', date: 'SEP 26 · 8:00 PM', ph: '♫',
+    link: 'https://wl.seetickets.us/event/scene-queen-metalicious/694290?afflky=PaperTiger',
+    img: 'https://prod-images.seetickets.us/eyJidWNrZXQiOiJwcm9kLXNpaC5zZWV0aWNrZXRzdXNhLnVzIiwia2V5IjoiYzhmMDg2NTUtYjU0Ni00Y2FiLWEyNjYtZGQ3M2JjMmQ2ZGQ3IiwiZWRpdHMiOnsicmVzaXplIjp7IndpZHRoIjo2MDB9LCJqcGVnIjp7InF1YWxpdHkiOjYwfSwicG5nIjp7ImNvbXByZXNzaW9uTGV2ZWwiOjksInF1YWxpdHkiOjYwfSwid2VicCI6eyJxdWFsaXR5Ijo2MH19fQ==',
+    desc: 'With WARGASM, Bailey Spinn. Live at Paper Tiger on the St. Mary\'s strip — SA\'s beloved DIY venue.',
+    venue: 'Paper Tiger', address: "2410 N St Mary's St, San Antonio, TX 78212",
+    hours: 'Doors 7:00 PM · Show 8:00 PM', price: '$$', era: 'Live @ Paper Tiger',
+    tags: ['Paper Tiger', 'St. Marys Strip', 'Live Music']
+  },
+  {
+    id: 'pt-sep27-millionaire-my-sweet-16-part', cat: 'show', name: 'MILLIONAIRE$ - My Sweet 16 part 2 tour', city: 'San Antonio', state: 'TX', date: 'SEP 27 · 7:00 PM', ph: '♫',
+    link: 'https://wl.seetickets.us/event/millionairedollar-my-sweet-16-part-2-tour/694953?afflky=PaperTiger',
+    img: 'https://prod-images.seetickets.us/eyJidWNrZXQiOiJwcm9kLXNpaC5zZWV0aWNrZXRzdXNhLnVzIiwia2V5IjoiYWZhMmViYzMtODJhNS00M2Q2LTliMmMtNjEyMTRjNDI4N2M0IiwiZWRpdHMiOnsicmVzaXplIjp7IndpZHRoIjo2MDB9LCJqcGVnIjp7InF1YWxpdHkiOjYwfSwicG5nIjp7ImNvbXByZXNzaW9uTGV2ZWwiOjksInF1YWxpdHkiOjYwfSwid2VicCI6eyJxdWFsaXR5Ijo2MH19fQ==',
+    desc: 'With Lil Reign Drop. Live at Paper Tiger on the St. Mary\'s strip — SA\'s beloved DIY venue.',
+    venue: 'Paper Tiger', address: "2410 N St Mary's St, San Antonio, TX 78212",
+    hours: 'Doors 6:00 PM · Show 7:00 PM', price: '$$', era: 'Live @ Paper Tiger',
+    tags: ['Paper Tiger', 'St. Marys Strip', 'Live Music']
+  },
+  {
+    id: 'pt-sep27-magenta-wave-junkyard-cat', cat: 'show', name: 'Magenta Wave, Junkyard Cat', city: 'San Antonio', state: 'TX', date: 'SEP 27 · 8:00 PM', ph: '♫',
+    link: 'https://wl.seetickets.us/event/magenta-wave-junkyard-cat/694215?afflky=PaperTiger',
+    img: 'https://prod-images.seetickets.us/eyJidWNrZXQiOiJwcm9kLXNpaC5zZWV0aWNrZXRzdXNhLnVzIiwia2V5IjoiOGQyOTRjY2ItMDBlMC00Y2NhLTk0MGEtOTZlZTk3Yzk4MzcxIiwiZWRpdHMiOnsicmVzaXplIjp7IndpZHRoIjo2MDB9LCJqcGVnIjp7InF1YWxpdHkiOjYwfSwicG5nIjp7ImNvbXByZXNzaW9uTGV2ZWwiOjksInF1YWxpdHkiOjYwfSwid2VicCI6eyJxdWFsaXR5Ijo2MH19fQ==',
+    desc: 'With mypilotis. Live at Paper Tiger on the St. Mary\'s strip — SA\'s beloved DIY venue.',
+    venue: 'Paper Tiger', address: "2410 N St Mary's St, San Antonio, TX 78212",
+    hours: 'Doors 7:00 PM · Show 8:00 PM', price: '$$', era: 'Live @ Paper Tiger',
+    tags: ['Paper Tiger', 'St. Marys Strip', 'Live Music']
+  },
+  {
+    id: 'pt-sep29-dana-and-alden', cat: 'show', name: 'Dana and Alden', city: 'San Antonio', state: 'TX', date: 'SEP 29 · 8:00 PM', ph: '♫',
+    link: 'https://wl.seetickets.us/event/dana-and-alden/693612?afflky=PaperTiger',
+    img: 'https://prod-images.seetickets.us/eyJidWNrZXQiOiJwcm9kLXNpaC5zZWV0aWNrZXRzdXNhLnVzIiwia2V5IjoiNWEyYmRhOWQtNTJiNi00MmE0LTlkNzQtN2IxOWM2OWE4ZjZiIiwiZWRpdHMiOnsicmVzaXplIjp7IndpZHRoIjo2MDB9LCJqcGVnIjp7InF1YWxpdHkiOjYwfSwicG5nIjp7ImNvbXByZXNzaW9uTGV2ZWwiOjksInF1YWxpdHkiOjYwfSwid2VicCI6eyJxdWFsaXR5Ijo2MH19fQ==',
+    desc: 'With Ania Hoo. Live at Paper Tiger on the St. Mary\'s strip — SA\'s beloved DIY venue.',
+    venue: 'Paper Tiger', address: "2410 N St Mary's St, San Antonio, TX 78212",
+    hours: 'Doors 7:00 PM · Show 8:00 PM', price: '$$', era: 'Live @ Paper Tiger',
+    tags: ['Paper Tiger', 'St. Marys Strip', 'Live Music']
+  },
+  {
+    id: 'pt-oct1-shawn-james', cat: 'show', name: 'Shawn James', city: 'San Antonio', state: 'TX', date: 'OCT 1 · 8:00 PM', ph: '♫',
+    link: 'https://wl.seetickets.us/event/shawn-james/695823?afflky=PaperTiger',
+    desc: 'With Gravedancer. Live at Paper Tiger on the St. Mary\'s strip — SA\'s beloved DIY venue.',
+    venue: 'Paper Tiger', address: "2410 N St Mary's St, San Antonio, TX 78212",
+    hours: 'Doors 7:00 PM · Show 8:00 PM', price: '$$', era: 'Live @ Paper Tiger',
+    tags: ['Paper Tiger', 'St. Marys Strip', 'Live Music']
+  },
+  {
+    id: 'pt-oct2-ultra-sunn', cat: 'show', name: 'Ultra Sunn', city: 'San Antonio', state: 'TX', date: 'OCT 2 · 8:00 PM', ph: '♫',
+    link: 'https://wl.seetickets.us/event/ultra-sunn/690337?afflky=PaperTiger',
+    img: 'https://prod-images.seetickets.us/eyJidWNrZXQiOiJwcm9kLXNpaC5zZWV0aWNrZXRzdXNhLnVzIiwia2V5IjoiZGVhMWMwZTQtMTA2MS00YTk2LWE4YWMtNTI4NTI4YThjNjdlIiwiZWRpdHMiOnsicmVzaXplIjp7IndpZHRoIjo2MDB9LCJqcGVnIjp7InF1YWxpdHkiOjYwfSwicG5nIjp7ImNvbXByZXNzaW9uTGV2ZWwiOjksInF1YWxpdHkiOjYwfSwid2VicCI6eyJxdWFsaXR5Ijo2MH19fQ==',
+    desc: 'With Soft Vein. Live at Paper Tiger on the St. Mary\'s strip — SA\'s beloved DIY venue.',
+    venue: 'Paper Tiger', address: "2410 N St Mary's St, San Antonio, TX 78212",
+    hours: 'Doors 7:00 PM · Show 8:00 PM', price: '$$', era: 'Live @ Paper Tiger',
+    tags: ['Paper Tiger', 'St. Marys Strip', 'Live Music']
+  },
+  {
+    id: 'pt-oct2-differentchris', cat: 'show', name: 'Differentchris', city: 'San Antonio', state: 'TX', date: 'OCT 2 · 8:00 PM', ph: '♫',
+    link: 'https://wl.seetickets.us/event/differentchris/699866?afflky=PaperTiger',
+    img: 'https://prod-images.seetickets.us/eyJidWNrZXQiOiJwcm9kLXNpaC5zZWV0aWNrZXRzdXNhLnVzIiwia2V5IjoiMWExOWVkOWItNzdmMi00MmUwLWFhYjQtY2Y0NGNhMjYwNDA3IiwiZWRpdHMiOnsicmVzaXplIjp7IndpZHRoIjo2MDB9LCJqcGVnIjp7InF1YWxpdHkiOjYwfSwicG5nIjp7ImNvbXByZXNzaW9uTGV2ZWwiOjksInF1YWxpdHkiOjYwfSwid2VicCI6eyJxdWFsaXR5Ijo2MH19fQ==',
+    desc: 'With Herfavoriteband. Live at Paper Tiger on the St. Mary\'s strip — SA\'s beloved DIY venue.',
+    venue: 'Paper Tiger', address: "2410 N St Mary's St, San Antonio, TX 78212",
+    hours: 'Doors 7:00 PM · Show 8:00 PM', price: '$$', era: 'Live @ Paper Tiger',
+    tags: ['Paper Tiger', 'St. Marys Strip', 'Live Music']
+  },
+  {
+    id: 'pt-oct4-this-wild-life', cat: 'show', name: 'This Wild Life', city: 'San Antonio', state: 'TX', date: 'OCT 4 · 8:00 PM', ph: '♫',
+    link: 'https://wl.seetickets.us/event/this-wild-life/699737?afflky=PaperTiger',
+    img: 'https://prod-images.seetickets.us/eyJidWNrZXQiOiJwcm9kLXNpaC5zZWV0aWNrZXRzdXNhLnVzIiwia2V5IjoiMDFhNzVmMDYtNzVkNC00NzkwLTlmMjMtNzgwNGEzNGE3YzRkIiwiZWRpdHMiOnsicmVzaXplIjp7IndpZHRoIjo2MDB9LCJqcGVnIjp7InF1YWxpdHkiOjYwfSwicG5nIjp7ImNvbXByZXNzaW9uTGV2ZWwiOjksInF1YWxpdHkiOjYwfSwid2VicCI6eyJxdWFsaXR5Ijo2MH19fQ==',
+    desc: 'With Nate Bergman. Live at Paper Tiger on the St. Mary\'s strip — SA\'s beloved DIY venue.',
+    venue: 'Paper Tiger', address: "2410 N St Mary's St, San Antonio, TX 78212",
+    hours: 'Doors 7:00 PM · Show 8:00 PM', price: '$$', era: 'Live @ Paper Tiger',
+    tags: ['Paper Tiger', 'St. Marys Strip', 'Live Music']
+  },
+  {
+    id: 'pt-oct6-holding-absence-arm-s-length', cat: 'show', name: 'Holding Absence, Arm\'s Length', city: 'San Antonio', state: 'TX', date: 'OCT 6 · 7:00 PM', ph: '♫',
+    link: 'https://wl.seetickets.us/event/holding-absence-arms-length/695136?afflky=PaperTiger',
+    img: 'https://prod-images.seetickets.us/eyJidWNrZXQiOiJwcm9kLXNpaC5zZWV0aWNrZXRzdXNhLnVzIiwia2V5IjoiNjFiNmY4MWEtZDc2Ny00NTI5LWE2MTktY2RiYWRiZjBmZGRjIiwiZWRpdHMiOnsicmVzaXplIjp7IndpZHRoIjo2MDB9LCJqcGVnIjp7InF1YWxpdHkiOjYwfSwicG5nIjp7ImNvbXByZXNzaW9uTGV2ZWwiOjksInF1YWxpdHkiOjYwfSwid2VicCI6eyJxdWFsaXR5Ijo2MH19fQ==',
+    desc: 'With Bloom, House & Home. Live at Paper Tiger on the St. Mary\'s strip — SA\'s beloved DIY venue.',
+    venue: 'Paper Tiger', address: "2410 N St Mary's St, San Antonio, TX 78212",
+    hours: 'Doors 6:00 PM · Show 7:00 PM', price: '$$', era: 'Live @ Paper Tiger',
+    tags: ['Paper Tiger', 'St. Marys Strip', 'Live Music']
+  },
+  {
+    id: 'pt-oct8-spy', cat: 'show', name: 'Spy', city: 'San Antonio', state: 'TX', date: 'OCT 8 · 7:00 PM', ph: '♫',
+    link: 'https://wl.eventim.us/event/spy/701568?afflky=POFTX',
+    img: 'https://prod-images.seetickets.us/eyJidWNrZXQiOiJwcm9kLXNpaC5zZWV0aWNrZXRzdXNhLnVzIiwia2V5IjoiMzM0ZDBiMjctM2ZjYS00Y2Y0LTljZjUtY2Q3NDAxMzg0OTZjIiwiZWRpdHMiOnsicmVzaXplIjp7IndpZHRoIjo2MDB9LCJqcGVnIjp7InF1YWxpdHkiOjYwfSwicG5nIjp7ImNvbXByZXNzaW9uTGV2ZWwiOjksInF1YWxpdHkiOjYwfSwid2VicCI6eyJxdWFsaXR5Ijo2MH19fQ==',
+    desc: 'Live at Paper Tiger on the St. Mary\'s strip — SA\'s beloved DIY venue.',
+    venue: 'Paper Tiger', address: "2410 N St Mary's St, San Antonio, TX 78212",
+    hours: 'Doors 6:00 PM · Show 7:00 PM', price: '$$', era: 'Live @ Paper Tiger',
+    tags: ['Paper Tiger', 'St. Marys Strip', 'Live Music']
+  },
+  {
+    id: 'pt-oct9-bragolin', cat: 'show', name: 'Bragolin', city: 'San Antonio', state: 'TX', date: 'OCT 9 · 8:00 PM', ph: '♫',
+    link: 'https://wl.seetickets.us/event/bragolin/697181?afflky=PaperTiger',
+    desc: 'With Carrellee. Live at Paper Tiger on the St. Mary\'s strip — SA\'s beloved DIY venue.',
+    venue: 'Paper Tiger', address: "2410 N St Mary's St, San Antonio, TX 78212",
+    hours: 'Doors 7:00 PM · Show 8:00 PM', price: '$$', era: 'Live @ Paper Tiger',
+    tags: ['Paper Tiger', 'St. Marys Strip', 'Live Music']
+  },
+  {
+    id: 'pt-oct10-ivri', cat: 'show', name: 'ivri', city: 'San Antonio', state: 'TX', date: 'OCT 10 · 8:00 PM', ph: '♫',
+    link: 'https://wl.seetickets.us/event/ivri/695471?afflky=PaperTiger',
+    img: 'https://prod-images.seetickets.us/eyJidWNrZXQiOiJwcm9kLXNpaC5zZWV0aWNrZXRzdXNhLnVzIiwia2V5IjoiZDAwZmZlYTgtNmYxZS00YTY5LWJjYWQtOGNiZmU2M2I1MWI1IiwiZWRpdHMiOnsicmVzaXplIjp7IndpZHRoIjo2MDB9LCJqcGVnIjp7InF1YWxpdHkiOjYwfSwicG5nIjp7ImNvbXByZXNzaW9uTGV2ZWwiOjksInF1YWxpdHkiOjYwfSwid2VicCI6eyJxdWFsaXR5Ijo2MH19fQ==',
+    desc: 'With Ally Nicholas. Live at Paper Tiger on the St. Mary\'s strip — SA\'s beloved DIY venue.',
+    venue: 'Paper Tiger', address: "2410 N St Mary's St, San Antonio, TX 78212",
+    hours: 'Doors 7:00 PM · Show 8:00 PM', price: '$$', era: 'Live @ Paper Tiger',
+    tags: ['Paper Tiger', 'St. Marys Strip', 'Live Music']
+  },
+  {
+    id: 'pt-oct10-xasthur-temple-of-fuzzwatch', cat: 'show', name: 'Xasthur, Temple of Fuzzwatch', city: 'San Antonio', state: 'TX', date: 'OCT 10 · 8:00 PM', ph: '♫',
+    link: 'https://wl.seetickets.us/event/xasthur-temple-of-fuzzwatch/701816?afflky=PaperTiger',
+    img: 'https://prod-images.seetickets.us/eyJidWNrZXQiOiJwcm9kLXNpaC5zZWV0aWNrZXRzdXNhLnVzIiwia2V5IjoiMWEwOTU0ZmItYjc3My00ODJhLWI2YjAtZDA2YmRhMWNjMzYyIiwiZWRpdHMiOnsicmVzaXplIjp7IndpZHRoIjo2MDB9LCJqcGVnIjp7InF1YWxpdHkiOjYwfSwicG5nIjp7ImNvbXByZXNzaW9uTGV2ZWwiOjksInF1YWxpdHkiOjYwfSwid2VicCI6eyJxdWFsaXR5Ijo2MH19fQ==',
+    desc: 'Live at Paper Tiger on the St. Mary\'s strip — SA\'s beloved DIY venue.',
+    venue: 'Paper Tiger', address: "2410 N St Mary's St, San Antonio, TX 78212",
+    hours: 'Doors 7:00 PM · Show 8:00 PM', price: '$$', era: 'Live @ Paper Tiger',
+    tags: ['Paper Tiger', 'St. Marys Strip', 'Live Music']
+  },
+  {
+    id: 'pt-oct11-sophie-hunter', cat: 'show', name: 'Sophie Hunter', city: 'San Antonio', state: 'TX', date: 'OCT 11 · 7:00 PM', ph: '♫',
+    link: 'https://wl.seetickets.us/event/sophie-hunter/696351?afflky=PaperTiger',
+    img: 'https://prod-images.seetickets.us/eyJidWNrZXQiOiJwcm9kLXNpaC5zZWV0aWNrZXRzdXNhLnVzIiwia2V5IjoiN2I0ZjM5YTQtMWY1NC00YzkyLWE4MjQtMzhkMmYwZDg4ZGI3IiwiZWRpdHMiOnsicmVzaXplIjp7IndpZHRoIjo2MDB9LCJqcGVnIjp7InF1YWxpdHkiOjYwfSwicG5nIjp7ImNvbXByZXNzaW9uTGV2ZWwiOjksInF1YWxpdHkiOjYwfSwid2VicCI6eyJxdWFsaXR5Ijo2MH19fQ==',
+    desc: 'Live at Paper Tiger on the St. Mary\'s strip — SA\'s beloved DIY venue.',
+    venue: 'Paper Tiger', address: "2410 N St Mary's St, San Antonio, TX 78212",
+    hours: 'Doors 6:00 PM · Show 7:00 PM', price: '$$', era: 'Live @ Paper Tiger',
+    tags: ['Paper Tiger', 'St. Marys Strip', 'Live Music']
+  },
 ];
 
 const grid = document.getElementById('grid');
@@ -1074,10 +1583,24 @@ const tagDrawer = document.getElementById('tagDrawer');
 const drawerOverlay = document.getElementById('drawerOverlay');
 const drawerClose = document.getElementById('drawerClose');
 const tagActiveDot = document.getElementById('tagActiveDot');
+const calendarBtn = document.getElementById('calendarBtn');
+const calOverlay = document.getElementById('calOverlay');
+const calClose = document.getElementById('calClose');
+const calMonths = document.getElementById('calMonths');
+const calDaysView = document.getElementById('calDaysView');
+const calDays = document.getElementById('calDays');
+const calTitle = document.getElementById('calTitle');
+const calBack = document.getElementById('calBack');
+const calClear = document.getElementById('calClear');
+const dateActiveDot = document.getElementById('dateActiveDot');
+const sortBtn = document.getElementById('sortBtn');
 
 let activeCat = 'all';
 let activeTag = null;
+let activeDate = null;   // { m: 0-11, d: 1-31 }
+let dateSort = null;     // null | 'asc' (soonest first) | 'desc' (latest first)
 let showSavedOnly = false;
+let countPrev = 0;       // last displayed find count (for the roll animation)
 let savedIds = new Set(JSON.parse(localStorage.getItem('dreamscape_watchlist') || '[]'));
 
 const CAT_LABELS = { thrift: '✿ THRIFT & VINTAGE', show: '♫ SHOW & CONCERT', event: '✦ SURREAL EVENT' };
@@ -1110,6 +1633,7 @@ function getItems() {
     if (activeCat !== 'all' && d.cat !== activeCat) return false;
     if (city !== 'all' && d.city !== city) return false;
     if (activeTag && !(d.tags || []).includes(activeTag)) return false;
+    if (activeDate && !itemOnDate(d, activeDate.m, activeDate.d)) return false;
     if (showSavedOnly && !savedIds.has(d.id)) return false;
     if (q) {
       const text = (d.name + ' ' + d.desc + ' ' + d.city + ' ' + (d.venue||'') + ' ' + (d.tags||[]).join(' ')).toLowerCase();
@@ -1117,6 +1641,52 @@ function getItems() {
     }
     return true;
   });
+}
+
+// ── date parsing (turn "AUG 22 · 8:00 PM" / "SEP 24–OCT 1" into [month,day] pairs) ──
+const MONTHIDX = { jan:0, feb:1, mar:2, apr:3, may:4, jun:5, jul:6, aug:7, sep:8, oct:9, nov:10, dec:11 };
+function parseItemDates(str) {
+  if (!str) return [];
+  const s = str.toLowerCase();
+  // find every "monthname day" token, e.g. "aug 22", "oct 1"
+  const toks = [...s.matchAll(/(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s*(\d{1,2})/g)]
+    .map(m => ({ m: MONTHIDX[m[1]], d: +m[2] }));
+  if (!toks.length) return [];
+  // a dash between the first two tokens = an inclusive range (e.g. Sep 24–Oct 1)
+  if (toks.length >= 2 && /[–—-]/.test(s)) {
+    const out = [], a = new Date(2026, toks[0].m, toks[0].d), b = new Date(2026, toks[1].m, toks[1].d);
+    if (b >= a && (b - a) / 864e5 <= 45) {
+      for (let t = new Date(a); t <= b; t.setDate(t.getDate() + 1)) out.push({ m: t.getMonth(), d: t.getDate() });
+      return out;
+    }
+  }
+  return toks;
+}
+function itemOnDate(d, m, day) {
+  return parseItemDates(d.date).some(p => p.m === m && p.d === day);
+}
+// earliest calendar time for a find (null if it has no parseable date)
+function itemTime(d) {
+  const ds = parseItemDates(d.date);
+  if (!ds.length) return null;
+  return Math.min(...ds.map(p => new Date(2026, p.m, p.d).getTime()));
+}
+// sort finds by date; undated finds (shops) always sink to the bottom
+function sortByDate(items) {
+  if (!dateSort) return items;
+  const dated = [], undated = [];
+  items.forEach(d => (itemTime(d) === null ? undated : dated).push(d));
+  dated.sort((a, b) => dateSort === 'asc' ? itemTime(a) - itemTime(b) : itemTime(b) - itemTime(a));
+  return [...dated, ...undated];
+}
+// count of finds per "m-d" for the current state (drives calendar highlights)
+function dateCounts() {
+  const st = stateSel.value, counts = {};
+  DATA.forEach(d => {
+    if (d.state !== st) return;
+    parseItemDates(d.date).forEach(p => { const k = p.m + '-' + p.d; counts[k] = (counts[k] || 0) + 1; });
+  });
+  return counts;
 }
 
 // build tag chips from items matching current state/category (ignoring the active tag),
@@ -1156,23 +1726,117 @@ function closeDrawer() {
   drawerOverlay.classList.remove('open');
 }
 
+// ── calendar (browse by date) ──
+const MONTH_NAMES = ['JANUARY','FEBRUARY','MARCH','APRIL','MAY','JUNE','JULY','AUGUST','SEPTEMBER','OCTOBER','NOVEMBER','DECEMBER'];
+const MONTH_ABBR = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+const CAL_YEAR = 2026;
+
+function openCalendar() {
+  calDaysView.style.display = 'none';
+  calTitle.textContent = 'PICK A MONTH · ' + CAL_YEAR;
+  buildMonths();
+  calOverlay.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeCalendar() {
+  calOverlay.classList.remove('open');
+  document.body.style.overflow = '';
+}
+function buildMonths() {
+  const counts = dateCounts();
+  const monthTotals = MONTH_NAMES.map((_, m) =>
+    Object.keys(counts).filter(k => +k.split('-')[0] === m).reduce((s, k) => s + counts[k], 0));
+  calMonths.innerHTML = MONTH_ABBR.map((mn, m) => {
+    const has = monthTotals[m] > 0;
+    return `<button class="cal-month ${has ? 'has' : 'empty'}" data-m="${m}" ${has ? '' : 'disabled'}>
+      ${mn}${has ? ` <b>${monthTotals[m]}</b>` : ''}</button>`;
+  }).join('');
+}
+function buildDays(m) {
+  const counts = dateCounts();
+  calTitle.textContent = MONTH_NAMES[m] + ' · ' + CAL_YEAR;
+  calDaysView.style.display = 'block';
+  const first = new Date(CAL_YEAR, m, 1).getDay();          // 0=Sun
+  const total = new Date(CAL_YEAR, m + 1, 0).getDate();
+  let cells = '';
+  for (let i = 0; i < first; i++) cells += `<div class="cal-day blank"></div>`;
+  for (let day = 1; day <= total; day++) {
+    const n = counts[m + '-' + day] || 0;
+    const sel = activeDate && activeDate.m === m && activeDate.d === day;
+    cells += n
+      ? `<div class="cal-day has ${sel ? 'sel' : ''}" data-m="${m}" data-d="${day}">${day}<span class="cnt">${n}</span></div>`
+      : `<div class="cal-day">${day}</div>`;
+  }
+  calDays.innerHTML = cells;
+}
+function setDate(m, d) {
+  activeDate = { m, d };
+  activeCat = 'all';                                        // show all cats so the date's finds appear
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector('.tab-btn[data-cat="all"]').classList.add('active');
+  dateActiveDot.classList.add('on');
+  closeCalendar();
+  render();
+}
+function clearDate() {
+  activeDate = null;
+  dateActiveDot.classList.remove('on');
+  render();
+}
+
+// date sort toggle: off → soonest first → latest first → off
+function updateSortBtn() {
+  const label = dateSort === 'asc' ? '↑ SOONEST FIRST'
+              : dateSort === 'desc' ? '↓ LATEST FIRST'
+              : '↕ SORT: DATE';
+  sortBtn.querySelector('span').textContent = label;
+  sortBtn.classList.toggle('active', !!dateSort);
+}
+function cycleSort() {
+  dateSort = dateSort === null ? 'asc' : dateSort === 'asc' ? 'desc' : null;
+  updateSortBtn();
+  render();
+}
+
+// odometer-style roll: counts from → to, sliding up when rising, down when falling
+function rollCount(el, from, to) {
+  if (!el) return;
+  if (from === to) { el.textContent = to; return; }
+  const rising = to > from;
+  el.classList.remove('roll-up', 'roll-down');
+  void el.offsetWidth;                               // restart the CSS slide
+  el.classList.add(rising ? 'roll-up' : 'roll-down');
+  const dur = 480, start = performance.now();
+  function tick(now) {
+    const t = Math.min(1, (now - start) / dur);
+    const eased = 1 - Math.pow(1 - t, 3);            // ease-out
+    el.textContent = Math.round(from + (to - from) * eased);
+    if (t < 1) requestAnimationFrame(tick); else el.textContent = to;
+  }
+  requestAnimationFrame(tick);
+}
+
 function render() {
   buildTagBar();
-  const items = getItems();
+  const items = sortByDate(getItems());
   if (!items.length) {
     grid.innerHTML = '';
     emptyBox.style.display = 'block';
     countBanner.textContent = '';
+    countPrev = 0;
     return;
   }
 
   emptyBox.style.display = 'none';
-  countBanner.innerHTML = `DISPLAYING <span>${items.length}</span> CURATED FINDS`;
+  const dateNote = activeDate ? ` ON <span>${MONTH_ABBR[activeDate.m]} ${activeDate.d}</span>` : '';
+  countBanner.innerHTML = `DISPLAYING <span class="cnum" id="countNum">${countPrev}</span> CURATED FINDS${dateNote}`;
+  rollCount(document.getElementById('countNum'), countPrev, items.length);
+  countPrev = items.length;
 
   grid.innerHTML = items.map(d => {
     const saved = savedIds.has(d.id);
     return `
-      <div class="card ${d.cat}" data-id="${d.id}">
+      <div class="card ${d.cat}" data-id="${d.id}" title="Click for details · middle-click (or Ctrl/Cmd+click) opens this find in a new tab">
         <div class="card-photo" data-photo-for="${d.id}"></div>
         <div class="card-top-bar">
           <span>SPOT #${String(DATA.indexOf(d) + 1).padStart(3, '0')}</span>
@@ -1265,12 +1929,34 @@ resetBtn.addEventListener('click', () => {
   citySel.value = 'all';
   activeCat = 'all';
   activeTag = null;
+  activeDate = null;
+  dateSort = null;
+  updateSortBtn();
   tagActiveDot.classList.remove('on');
+  dateActiveDot.classList.remove('on');
   showSavedOnly = false;
   savedFilterBtn.classList.remove('active');
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   document.querySelector('.tab-btn[data-cat="all"]').classList.add('active');
   render();
+});
+
+// date sort toggle
+sortBtn.addEventListener('click', cycleSort);
+
+// calendar wiring
+calendarBtn.addEventListener('click', openCalendar);
+calClose.addEventListener('click', closeCalendar);
+calOverlay.addEventListener('click', e => { if (e.target === calOverlay) closeCalendar(); });
+calBack.addEventListener('click', () => { calDaysView.style.display = 'none'; calTitle.textContent = 'PICK A MONTH · ' + CAL_YEAR; });
+calClear.addEventListener('click', () => { clearDate(); closeCalendar(); });
+calMonths.addEventListener('click', e => {
+  const b = e.target.closest('.cal-month.has');
+  if (b) buildDays(+b.dataset.m);
+});
+calDays.addEventListener('click', e => {
+  const c = e.target.closest('.cal-day.has');
+  if (c) setDate(+c.dataset.m, +c.dataset.d);
 });
 
 const overlay = document.getElementById('overlay');
@@ -1350,6 +2036,7 @@ async function openModal(d) {
     </div>
 
     <div class="modal-actions">
+      ${d.link ? `<a class="modal-btn" href="${d.link}" target="_blank" rel="noopener">🎟 TICKET PAGE</a>` : ''}
       <a class="modal-btn" href="${mapsUrl}" target="_blank" rel="noopener">📍 MAP DIRECTIONS</a>
       <button class="modal-btn secondary" onclick="toggleSave('${d.id}'); this.innerHTML = savedIds.has('${d.id}') ? '★ SAVED' : '☆ SAVE WATCHLIST';">
         ${saved ? '★ SAVED WATCHLIST' : '☆ SAVE WATCHLIST'}
@@ -1371,6 +2058,15 @@ function closeModal() {
   document.body.style.overflow = '';
 }
 
+// best external page for a find: ticket link if it has one, else Google Maps of the place
+function itemLink(d) {
+  return d.link || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(d.name + ' ' + d.address)}`;
+}
+// open THIS site in a new tab, deep-linked to open that find
+function openSiteTab(d) {
+  window.open(location.href.split('#')[0] + '#find=' + encodeURIComponent(d.id), '_blank');
+}
+
 grid.addEventListener('click', e => {
   // clicking a #tag on a card filters by that tag instead of opening the find
   const tagEl = e.target.closest('.tag-item');
@@ -1383,8 +2079,24 @@ grid.addEventListener('click', e => {
   const card = e.target.closest('.card');
   if (card) {
     const d = DATA.find(item => item.id === card.dataset.id);
-    if (d) openModal(d);
+    if (!d) return;
+    // Ctrl/Cmd + click opens this site in a new tab, on that find
+    if (e.metaKey || e.ctrlKey) { openSiteTab(d); return; }
+    openModal(d);
   }
+});
+
+// middle-click a tile → open this site again in a new tab, showing that find
+grid.addEventListener('auxclick', e => {
+  if (e.button !== 1) return;
+  const card = e.target.closest('.card');
+  if (!card) return;
+  const d = DATA.find(item => item.id === card.dataset.id);
+  if (d) { e.preventDefault(); openSiteTab(d); }
+});
+// stop the middle-click autoscroll bubble over a tile
+grid.addEventListener('mousedown', e => {
+  if (e.button === 1 && e.target.closest('.card')) e.preventDefault();
 });
 
 // tag filter drawer
@@ -1395,7 +2107,7 @@ tagBar.addEventListener('click', e => {
 tagsBtn.addEventListener('click', openDrawer);
 drawerClose.addEventListener('click', closeDrawer);
 drawerOverlay.addEventListener('click', closeDrawer);
-document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDrawer(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeDrawer(); closeCalendar(); } });
 
 document.getElementById('closeX').addEventListener('click', closeModal);
 overlay.addEventListener('click', e => { if (e.target === overlay) closeModal(); });
@@ -1418,6 +2130,16 @@ searchBox.addEventListener('input', render);
 
 buildCityOptions();
 render();
+
+// deep link: opening the site with #find=<id> pops that find open (used by new-tab / middle-click)
+function openFromHash() {
+  const m = /#find=([^&]+)/.exec(location.hash);
+  if (!m) return;
+  const d = DATA.find(x => x.id === decodeURIComponent(m[1]));
+  if (d) openModal(d);
+}
+openFromHash();
+window.addEventListener('hashchange', openFromHash);
 </script>
 </body>
 </html>
