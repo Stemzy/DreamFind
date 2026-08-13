@@ -709,6 +709,37 @@
   .np-label { font-weight: 700; }
   .field-group label { font-weight: 600; font-size: 11px; }
 
+  /* venue combobox: type to search + tap ▾ to browse */
+  .combo { position: relative; }
+  .combo .zine-input { width: 100%; padding-right: 40px; }
+  .combo-arrow {
+    position: absolute; top: 0; right: 0; height: 100%; width: 38px;
+    background: #000; border: 1px solid var(--line); border-left: 0; color: #fff;
+    cursor: pointer; font-size: 14px; line-height: 1;
+  }
+  .combo-arrow:hover { background: var(--acid); color: #000; border-color: var(--acid); }
+  .combo-list {
+    position: absolute; top: calc(100% + 2px); left: 0; right: 0; z-index: 50;
+    list-style: none; margin: 0; padding: 0; max-height: 260px; overflow-y: auto;
+    background: #05070d; border: 1px solid var(--line); display: none;
+  }
+  .combo-list.open { display: block; }
+  .combo-list li {
+    padding: 9px 12px; font-size: 13px; color: var(--text-white); cursor: pointer;
+    border-bottom: 1px solid #161b2c; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .combo-list li:hover, .combo-list li.active { background: var(--acid); color: #000; }
+  .combo-list li.all { color: var(--acid); }
+  .combo-list li.all:hover { color: #000; }
+
+  /* socials / website links in the info popup */
+  .link-row { display: flex; flex-wrap: wrap; gap: 8px; }
+  .link-row a {
+    color: var(--acid); border: 1px solid var(--line); border-radius: 0;
+    padding: 3px 10px; font-size: 12px; text-decoration: none; transition: all .12s;
+  }
+  .link-row a:hover { background: var(--acid); color: #000; border-color: var(--acid); }
+
   /* ═══ Flyer Wall (gallery) view ═══ */
   .grid.gallery { grid-template-columns: repeat(auto-fill, minmax(158px, 1fr)); gap: 12px; }
   .grid.gallery .card { min-height: 210px; }
@@ -779,15 +810,17 @@
         <option value="all">All Cities</option>
       </select>
     </div>
-    <div class="field-group">
+    <div class="field-group venue-field">
       <label for="venueSel">VENUE / SPOT</label>
-      <select class="zine-input" id="venueSel">
-        <option value="all">All Venues</option>
-      </select>
+      <div class="combo">
+        <input class="zine-input" id="venueSel" autocomplete="off" placeholder="Any venue — type or tap ▾">
+        <button class="combo-arrow" id="venueArrow" type="button" aria-label="Browse venues">▾</button>
+        <ul class="combo-list" id="venueMenu"></ul>
+      </div>
     </div>
     <div class="field-group">
       <label for="searchBox">SEARCH KEYWORDS</label>
-      <input class="zine-input" id="searchBox" type="text" placeholder="Type band, shop name, Y2K, goth...">
+      <input class="zine-input" id="searchBox" type="text" placeholder="Band, venue, shop, Y2K, goth...">
     </div>
   </div>
 
@@ -930,7 +963,8 @@
    ═══════════════════════════════════════════════════════════════════ */
 const DATA = [
   {
-    id: 'baby-arcade-mcallen', cat: 'thrift', name: 'Baby Arcade — McAllen', city: 'McAllen', state: 'TX',
+    id: 'baby-arcade-mcallen',
+    links: [{label: 'Website', url: 'https://www.babyarcade.net/'}, {label: 'Instagram', url: 'https://www.instagram.com/babyarcade'}], cat: 'thrift', name: 'Baby Arcade — McAllen', city: 'McAllen', state: 'TX',
     desc: 'The RGV Valley outpost of the iconic Y2K vintage spot. Loaded with retro tees, streetwear, and aesthetic accessories.',
     img: 'https://www.babyarcade.net/uploads/b/1a0ec5b0-113a-11ee-b326-bd34a9dd03b4/STICKERLOGO2.jpeg',
     address: 'McAllen, TX — see babyarcade.net for current spot',
@@ -939,7 +973,8 @@ const DATA = [
     tags: ['RGV', 'Y2K', 'Streetwear']
   },
   {
-    id: 'room-service-atx', cat: 'thrift', name: 'Room Service Vintage', city: 'Austin', state: 'TX', ph: '✿',
+    id: 'room-service-atx',
+    links: [{label: 'Website', url: 'https://roomservicevintage.com/'}, {label: 'Instagram', url: 'https://www.instagram.com/roomservicevintage'}], cat: 'thrift', name: 'Room Service Vintage', city: 'Austin', state: 'TX', ph: '✿',
     img: 'https://roomservicevintage.com/wp-content/uploads/2022/11/GoogleStreetViewImage.jpg',
     desc: 'A sprawling North Loop showroom of mid-century treasures — 50s–70s furniture, neon lighting, retro clothes, vinyl records, and strange curiosities.',
     address: '117 E North Loop Blvd, Austin, TX 78751',
@@ -974,7 +1009,8 @@ const DATA = [
     tags: ['Dresses', 'Boots', 'Do512 Best']
   },
   {
-    id: 'texas-thrift-sa', cat: 'thrift', name: 'Texas Thrift Store', city: 'San Antonio', state: 'TX', ph: '✿',
+    id: 'texas-thrift-sa',
+    links: [{label: 'Website', url: 'https://texasthrift.com/'}, {label: 'Instagram', url: 'https://www.instagram.com/texasthrift'}], cat: 'thrift', name: 'Texas Thrift Store', city: 'San Antonio', state: 'TX', ph: '✿',
     img: 'https://texasthrift.com/wp-content/uploads/preview-img-2-1024x538.png',
     desc: 'Massive rack digger paradise with rock-bottom prices. Daily restocks of clothes, shoes, housewares across 4 SA locations.',
     address: '6776 Ingram Rd (+3 more SA locations), San Antonio, TX',
@@ -983,7 +1019,8 @@ const DATA = [
     tags: ['Thrift Dig', 'Bargains']
   },
   {
-    id: 'real-retro-sa', cat: 'thrift', name: 'Real Retro', city: 'San Antonio', state: 'TX', ph: '✿',
+    id: 'real-retro-sa',
+    links: [{label: 'Instagram', url: 'https://www.instagram.com/realretrosa'}], cat: 'thrift', name: 'Real Retro', city: 'San Antonio', state: 'TX', ph: '✿',
     desc: "San Antonio's ultimate 80s & 90s time machine — 40,000+ items stuffed with clothing, toys, vinyl, tech, and posters. A full-blown nostalgia dive.",
     address: 'San Antonio, TX — see @realretrosa for current spot',
     hours: 'Check Instagram for hours',
@@ -991,7 +1028,8 @@ const DATA = [
     tags: ['Y2K', 'Toys', 'Vinyl', 'Retro Tech', 'Posters']
   },
   {
-    id: 'friends-of-sound-sa', cat: 'thrift', name: 'Friends of Sound', city: 'San Antonio', state: 'TX', ph: '✿',
+    id: 'friends-of-sound-sa',
+    links: [{label: 'Website', url: 'https://www.friendsofsoundrecords.com/'}], cat: 'thrift', name: 'Friends of Sound', city: 'San Antonio', state: 'TX', ph: '✿',
     img: 'https://images.squarespace-cdn.com/content/v1/652c5d8d17862613a85adadb/4e521d46-eeb0-47f6-b695-fabc0ecf30a9/fos-logo-big.png',
     desc: 'Record shop meets Y2K vintage — well-curated vinyl crates alongside racks of Y2K fashion and oversized cartoon graphic tees.',
     address: '700 Fredericksburg Rd, San Antonio, TX 78201',
@@ -1024,7 +1062,8 @@ const DATA = [
     tags: ['Vintage', 'Shoes', 'All Genders', 'Thrift Dig']
   },
   {
-    id: 'period-modern-sa', cat: 'thrift', name: 'Period Modern', city: 'San Antonio', state: 'TX', ph: '✦',
+    id: 'period-modern-sa',
+    links: [{label: 'Website', url: 'https://periodmodern.com/'}], cat: 'thrift', name: 'Period Modern', city: 'San Antonio', state: 'TX', ph: '✦',
     desc: 'One of the top mid-century modern furniture dealers in the US — hand-picked design classics by Bertoia, Wegner, Saarinen, Baughman and Kagan.',
     address: 'San Antonio, TX — see periodmodern.com',
     hours: 'By showroom appointment · check periodmodern.com',
@@ -1040,7 +1079,8 @@ const DATA = [
     tags: ['Furniture', 'Mid-Century', 'Decor', 'Blanco Rd']
   },
   {
-    id: 'contact-modern-sa', cat: 'thrift', name: 'Contact Modern', city: 'San Antonio', state: 'TX', ph: '✦',
+    id: 'contact-modern-sa',
+    links: [{label: 'Website', url: 'https://contactmodern.com/'}], cat: 'thrift', name: 'Contact Modern', city: 'San Antonio', state: 'TX', ph: '✦',
     desc: 'Mid-century furniture, vintage art, and unique home décor. Physical SA showroom plus online shopping with worldwide shipping.',
     address: 'San Antonio, TX — see contactmodern.com',
     hours: 'By showroom · check contactmodern.com',
@@ -1056,7 +1096,8 @@ const DATA = [
     tags: ['Film Cameras', 'Lenses', 'Vintage Gear', 'Analog']
   },
   {
-    id: 'digital-pro-lab-sa', cat: 'thrift', name: 'Digital Pro Lab', city: 'San Antonio', state: 'TX', ph: '✦',
+    id: 'digital-pro-lab-sa',
+    links: [{label: 'Website', url: 'https://digitalprolab.com/'}], cat: 'thrift', name: 'Digital Pro Lab', city: 'San Antonio', state: 'TX', ph: '✦',
     desc: 'In business since 1993 — film developing, printing, and a home for analog processes. The spot to bring your vintage-camera rolls.',
     address: 'San Antonio, TX — see digitalprolab.com',
     hours: 'Check digitalprolab.com/location-store-hours',
@@ -1791,6 +1832,7 @@ const DATA = [
   },
   {
     id: 'venue-vibes',
+    links: [{label: 'Website', url: 'https://vibeseventcenter.com/'}],
     cat: 'show',
     name: 'Vibes Event Center',
     city: 'San Antonio',
@@ -1807,6 +1849,7 @@ const DATA = [
   },
   {
     id: 'venue-stable-hall',
+    links: [{label: 'Website', url: 'https://www.stablehall.com/'}],
     cat: 'show',
     name: 'Stable Hall',
     city: 'San Antonio',
@@ -1868,6 +1911,7 @@ const DATA = [
   },
   {
     id: 'venue-sams',
+    links: [{label: 'Website', url: 'https://samsburgerjoint.com/'}],
     cat: 'show',
     name: 'Sam’s Burger Joint',
     city: 'San Antonio',
@@ -1884,6 +1928,7 @@ const DATA = [
   },
   {
     id: 'venue-catl',
+    links: [{label: 'Website', url: 'https://comeandtakeitproductions.com/'}],
     cat: 'show',
     name: 'Come and Take It Live',
     city: 'Austin',
@@ -1900,6 +1945,7 @@ const DATA = [
   },
   {
     id: 'venue-empire',
+    links: [{label: 'Website', url: 'https://empireatx.com/'}],
     cat: 'show',
     name: 'Empire Control Room & Garage',
     city: 'Austin',
@@ -2071,6 +2117,7 @@ const DATA = [
   },
   {
     id: 'venue-white-oak-hou',
+    links: [{label: 'Website', url: 'https://whiteoakmusichall.com/'}],
     cat: 'show',
     name: 'White Oak Music Hall',
     city: 'Houston',
@@ -2102,6 +2149,7 @@ const DATA = [
   },
   {
     id: 'venue-numbers-hou',
+    links: [{label: 'Website', url: 'https://numbersnightclub.com/'}],
     cat: 'show',
     name: 'Numbers Nightclub',
     city: 'Houston',
@@ -2118,6 +2166,7 @@ const DATA = [
   },
   {
     id: 'venue-trees-dal',
+    links: [{label: 'Website', url: 'https://treesdallas.com/'}],
     cat: 'show',
     name: 'Trees',
     city: 'Dallas',
@@ -2134,6 +2183,7 @@ const DATA = [
   },
   {
     id: 'venue-granada-dal',
+    links: [{label: 'Website', url: 'https://www.granadatheater.com/'}],
     cat: 'show',
     name: 'Granada Theater',
     city: 'Dallas',
@@ -2179,13 +2229,79 @@ const DATA = [
     tags: ['Deep Ellum', 'Eclectic', 'Local', 'Venue', 'Live Music']
   },
   {
-    id: 'sigs-lagoon-hou', cat: 'thrift', name: "Sig's Lagoon", city: 'Houston', state: 'TX',
+    id: 'sigs-lagoon-hou',
+    links: [{label: 'Website', url: 'https://www.sigslagoon.com/'}, {label: 'Instagram', url: 'https://www.instagram.com/sigslagoon'}, {label: 'Facebook', url: 'https://www.facebook.com/sigslagoon/'}], cat: 'thrift', name: "Sig's Lagoon", city: 'Houston', state: 'TX',
     img: 'https://static.wixstatic.com/media/740990_04e8015666bd4e62b99687621ec2df63~mv2.png/v1/fit/w_1200,h_638,al_c/740990_04e8015666bd4e62b99687621ec2df63~mv2.png',
     desc: "Houston's signature record shop in Mid-Main — 100,000+ new & used vinyl LPs to dig through. They also buy used vinyl (Thu-Tue 10am-2pm) and run their own label + the Late Night Lagoon show.",
     address: '3622 Main St, Suite E, Houston, TX 77002',
     hours: 'Mon-Wed 10am-9pm \u00b7 Thu-Sat 10am-10pm \u00b7 Sun 10am-8pm',
     price: '$$', era: 'Vinyl / Records',
     tags: ['Vinyl', 'Records', 'New & Used', 'Mid-Main', 'Buy Sell Trade']
+  },
+  {
+    id: 'venue-the-end-hou', cat: 'show', name: 'The End', city: 'Houston', state: 'TX',
+    venue: 'The End', link: 'https://www.theendhtx.com/event-list',
+    img: 'https://static.wixstatic.com/media/988e68_18ebbefc9d6c4ff4985249c96595a324~mv2.jpg/v1/fill/w_1200,h_608,al_c/988e68_18ebbefc9d6c4ff4985249c96595a324~mv2.jpg',
+    ph: '♫',
+    desc: "Houston's all-ages, all-genres eastside DIY venue on Lawndale — everything from hardcore punk to cumbia, with 2 stages (indoor + outdoor). Voted Best Small Live Venue by the Houston Press.",
+    address: '7124 Lawndale St, Houston, TX 77023',
+    hours: 'Rotating lineup · see live calendar', price: 'varies', era: 'Live Venue',
+    links: [{label: 'Website', url: 'https://www.theendhtx.com/'}, {label: 'Instagram', url: 'https://www.instagram.com/the_end_houston/'}, {label: 'Facebook', url: 'https://www.facebook.com/TheEndHTX'}],
+    tags: ['The End', 'Eastside', 'All Ages', 'Punk', 'Metal', 'Venue', 'Live Music']
+  },
+  {
+    id: 'end-dogma-society', cat: 'show', name: "Dogma Society w/ Nautics", city: 'Houston', state: 'TX', date: 'AUG 13 · 7:00 PM',
+    venue: 'The End', link: 'https://www.theendhtx.com/event-details/dogma-society-w-nautics',
+    ph: '♫',
+    desc: "Live at The End — Houston's all-ages eastside DIY venue on Lawndale.",
+    address: '7124 Lawndale St, Houston, TX 77023',
+    hours: 'Show 7:00 PM · all ages', price: '$12', era: 'Live @ The End',
+    links: [{label: 'Website', url: 'https://www.theendhtx.com/'}, {label: 'Instagram', url: 'https://www.instagram.com/the_end_houston/'}, {label: 'Facebook', url: 'https://www.facebook.com/TheEndHTX'}],
+    tags: ['The End', 'Eastside', 'Live Music', 'Punk']
+  },
+  {
+    id: 'end-squid-pisser', cat: 'show', name: "Squid Pisser w/ Throat Piss, Apex Fallen & Evokation", city: 'Houston', state: 'TX', date: 'AUG 28 · 7:00 PM',
+    venue: 'The End', link: 'https://www.theendhtx.com/event-details/squid-pisser-w-throat-piss-apex-fallen-and-evokation',
+    img: 'https://static.wixstatic.com/media/988e68_88b434aee8b34786bb220c39b48bec2f~mv2.jpg/v1/fill/w_600,h_800,al_c/988e68_88b434aee8b34786bb220c39b48bec2f~mv2.jpg',
+    ph: '♫',
+    desc: "Live at The End — Houston's all-ages eastside DIY venue on Lawndale.",
+    address: '7124 Lawndale St, Houston, TX 77023',
+    hours: 'Show 7:00 PM · all ages', price: '$15+', era: 'Live @ The End',
+    links: [{label: 'Website', url: 'https://www.theendhtx.com/'}, {label: 'Instagram', url: 'https://www.instagram.com/the_end_houston/'}, {label: 'Facebook', url: 'https://www.facebook.com/TheEndHTX'}],
+    tags: ['The End', 'Eastside', 'Live Music', 'Noise', 'Punk']
+  },
+  {
+    id: 'end-decaine', cat: 'show', name: "DECAINE", city: 'Houston', state: 'TX', date: 'AUG 29 · 7:00 PM',
+    venue: 'The End', link: 'https://www.theendhtx.com/event-details/decaine',
+    img: 'https://static.wixstatic.com/media/988e68_f57b8a79b4c34016af8a59c437657a4f~mv2.png/v1/fill/w_600,h_800,al_c/988e68_f57b8a79b4c34016af8a59c437657a4f~mv2.png',
+    ph: '♫',
+    desc: "Live at The End — Houston's all-ages eastside DIY venue on Lawndale.",
+    address: '7124 Lawndale St, Houston, TX 77023',
+    hours: 'Show 7:00 PM · all ages', price: '$15+', era: 'Live @ The End',
+    links: [{label: 'Website', url: 'https://www.theendhtx.com/'}, {label: 'Instagram', url: 'https://www.instagram.com/the_end_houston/'}, {label: 'Facebook', url: 'https://www.facebook.com/TheEndHTX'}],
+    tags: ['The End', 'Eastside', 'Live Music', 'Metal']
+  },
+  {
+    id: 'end-bloodrave', cat: 'show', name: "Bloodrave Halloween Tour", city: 'Houston', state: 'TX', date: 'SEP 5 · 7:00 PM',
+    venue: 'The End', link: 'https://www.eventim.us/event/tickets/699556',
+    img: 'https://static.wixstatic.com/media/988e68_c67fbd4c6f924e3a8bfaaaf23e70b0da~mv2.png/v1/fill/w_600,h_800,al_c/988e68_c67fbd4c6f924e3a8bfaaaf23e70b0da~mv2.png',
+    ph: '♫',
+    desc: "Live at The End — Houston's all-ages eastside DIY venue on Lawndale.",
+    address: '7124 Lawndale St, Houston, TX 77023',
+    hours: 'Show 7:00 PM · all ages', price: 'see tickets', era: 'Live @ The End',
+    links: [{label: 'Website', url: 'https://www.theendhtx.com/'}, {label: 'Instagram', url: 'https://www.instagram.com/the_end_houston/'}, {label: 'Facebook', url: 'https://www.facebook.com/TheEndHTX'}],
+    tags: ['The End', 'Eastside', 'Live Music', 'Goth', 'Darkwave']
+  },
+  {
+    id: 'end-every-avenue', cat: 'show', name: "Every Avenue & In Her Own Words w/ Felicity, Neutral Snap", city: 'Houston', state: 'TX', date: 'SEP 26 · 7:00 PM',
+    venue: 'The End', link: 'https://www.theendhtx.com/event-details/every-avenue-and-in-her-own-words-with-felicity-and-neutral-snap',
+    img: 'https://static.wixstatic.com/media/988e68_e7c0524a77df4970ae5183b8f276d004~mv2.png/v1/fill/w_600,h_800,al_c/988e68_e7c0524a77df4970ae5183b8f276d004~mv2.png',
+    ph: '♫',
+    desc: "Live at The End — Houston's all-ages eastside DIY venue on Lawndale.",
+    address: '7124 Lawndale St, Houston, TX 77023',
+    hours: 'Show 7:00 PM · all ages', price: '$23+', era: 'Live @ The End',
+    links: [{label: 'Website', url: 'https://www.theendhtx.com/'}, {label: 'Instagram', url: 'https://www.instagram.com/the_end_houston/'}, {label: 'Facebook', url: 'https://www.facebook.com/TheEndHTX'}],
+    tags: ['The End', 'Eastside', 'Live Music', 'Pop-Punk', 'Emo']
   },
 ];
 
@@ -2227,6 +2343,9 @@ let weekOnly = false;    // "this week" quick filter
 let tonightOnly = false; // "tonight" quick filter
 let galleryView = false; // flyer-wall view
 const venueSel = document.getElementById('venueSel');
+const venueArrow = document.getElementById('venueArrow');
+const venueMenu = document.getElementById('venueMenu');
+let venuesForState = [];
 let savedIds = new Set(JSON.parse(localStorage.getItem('dreamscape_watchlist') || '[]'));
 
 const CAT_LABELS = { thrift: '✿ THRIFT & VINTAGE', show: '♫ SHOW & CONCERT', event: '✦ SURREAL EVENT' };
@@ -2250,18 +2369,28 @@ function buildCityOptions() {
   const cities = [...new Set(DATA.filter(d => d.state === st).map(d => d.city))].sort();
   citySel.innerHTML = '<option value="all">All Cities</option>' +
     cities.map(c => `<option value="${c}">${c}</option>`).join('');
-  const venues = [...new Set(DATA.filter(d => d.state === st && d.venue).map(d => d.venue))].sort();
-  venueSel.innerHTML = '<option value="all">All Venues</option>' +
-    venues.map(v => `<option value="${v}">${v}</option>`).join('');
+  venuesForState = [...new Set(DATA.filter(d => d.state === st && d.venue).map(d => d.venue))].sort();
+  buildVenueMenu();
 }
 
+// build the venue dropdown list, filtered by whatever is typed
+function buildVenueMenu() {
+  const f = venueSel.value.trim().toLowerCase();
+  const matches = venuesForState.filter(v => v.toLowerCase().includes(f));
+  venueMenu.innerHTML =
+    `<li class="all" data-v="">★ All venues</li>` +
+    matches.map(v => `<li data-v="${v.replace(/"/g, '&quot;')}">${v}</li>`).join('');
+}
+function openVenueMenu() { buildVenueMenu(); venueMenu.classList.add('open'); }
+function closeVenueMenu() { venueMenu.classList.remove('open'); }
+
 function getItems() {
-  const st = stateSel.value, city = citySel.value, venue = venueSel.value, q = searchBox.value.trim().toLowerCase();
+  const st = stateSel.value, city = citySel.value, venue = venueSel.value.trim().toLowerCase(), q = searchBox.value.trim().toLowerCase();
   return DATA.filter(d => {
     if (d.state !== st) return false;
     if (activeCat !== 'all' && d.cat !== activeCat) return false;
     if (city !== 'all' && d.city !== city) return false;
-    if (venue !== 'all' && d.venue !== venue) return false;
+    if (venue && !(d.venue || '').toLowerCase().includes(venue)) return false;
     if (activeTag && !(d.tags || []).includes(activeTag)) return false;
     // auto-hide past dated shows (unless you're browsing a specific calendar date)
     if (!activeDate) { const du = daysUntil(d); if (du !== null && du < 0) return false; }
@@ -2541,30 +2670,6 @@ function svgPlaceholder(cat) {
 
 const NOT_FOUND = 'images/not-found.png';   // 404 fallback image
 
-// download an .ics calendar file for a dated find
-function addToCalendar(id) {
-  const d = DATA.find(x => x.id === id); if (!d) return;
-  const t = itemTime(d); if (t === null) return;
-  const start = new Date(t);
-  const tm = /(\d{1,2}):(\d{2})\s*(AM|PM)/i.exec(d.date || '');
-  if (tm) { let h = +tm[1] % 12; if (/pm/i.test(tm[3])) h += 12; start.setHours(h, +tm[2]); }
-  else start.setHours(20, 0);
-  const end = new Date(start.getTime() + 3 * 3600e3);
-  const fmt = dt => dt.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
-  const esc = s => (s || '').replace(/[,;\\]/g, '\\$&').replace(/\n/g, '\\n');
-  const ics = [
-    'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Dreamscape Finder//EN', 'BEGIN:VEVENT',
-    'UID:' + d.id + '@dreamscape', 'DTSTAMP:' + fmt(new Date()),
-    'DTSTART:' + fmt(start), 'DTEND:' + fmt(end),
-    'SUMMARY:' + esc(d.name), 'LOCATION:' + esc((d.venue ? d.venue + ', ' : '') + d.address),
-    'DESCRIPTION:' + esc(d.desc + (d.link ? '\nTickets: ' + d.link : '')),
-    'END:VEVENT', 'END:VCALENDAR'
-  ].join('\r\n');
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob([ics], { type: 'text/calendar' }));
-  a.download = d.id + '.ics'; a.click(); URL.revokeObjectURL(a.href);
-}
-
 // copy a deep link to this find to the clipboard
 function shareFind(id, btn) {
   const url = location.href.split('#')[0] + '#find=' + encodeURIComponent(id);
@@ -2622,7 +2727,7 @@ resetBtn.addEventListener('click', () => {
   dateSort = null;
   weekOnly = false; tonightOnly = false;
   weekBtn.classList.remove('active'); tonightBtn.classList.remove('active');
-  venueSel.value = 'all';
+  venueSel.value = '';
   updateSortBtn();
   tagActiveDot.classList.remove('on');
   dateActiveDot.classList.remove('on');
@@ -2636,8 +2741,25 @@ resetBtn.addEventListener('click', () => {
 // date sort toggle
 sortBtn.addEventListener('click', cycleSort);
 
-// venue filter
-venueSel.addEventListener('change', render);
+// venue combobox: type to search, tap ▾ to browse, tap an option to pick
+venueSel.addEventListener('input', () => { openVenueMenu(); render(); });
+venueSel.addEventListener('focus', openVenueMenu);
+venueArrow.addEventListener('click', () => {
+  if (venueMenu.classList.contains('open')) { closeVenueMenu(); return; }
+  venueSel.blur();                                    // browse mode — don't pop the keyboard
+  try { venueSel.scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch (e) {}
+  openVenueMenu();
+});
+venueMenu.addEventListener('click', e => {
+  const li = e.target.closest('li');
+  if (!li) return;
+  venueSel.value = li.dataset.v;
+  closeVenueMenu();
+  render();
+});
+document.addEventListener('click', e => {
+  if (!e.target.closest('.combo')) closeVenueMenu();
+});
 
 // "this week" / "tonight" quick filters
 const weekBtn = document.getElementById('weekBtn');
@@ -2752,12 +2874,12 @@ async function openModal(d) {
       ${d.venue ? `<div class="info-item"><label>VENUE</label><p>${d.venue}</p></div>` : ''}
       <div class="info-item"><label>ADDRESS</label><p>${d.address}</p></div>
       <div class="info-item"><label>HOURS & TIMING</label><p>${d.hours}</p></div>
+      ${d.links && d.links.length ? `<div class="info-item"><label>FIND THEM</label><p class="link-row">${d.links.map(l => `<a href="${l.url}" target="_blank" rel="noopener">${l.label}</a>`).join('')}</p></div>` : ''}
     </div>
 
     <div class="modal-actions">
       ${d.link ? `<a class="modal-btn" href="${d.link}" target="_blank" rel="noopener">🎟 TICKET PAGE</a>` : ''}
       <a class="modal-btn" href="${mapsUrl}" target="_blank" rel="noopener">📍 MAP DIRECTIONS</a>
-      ${itemTime(d) !== null ? `<button class="modal-btn" onclick="addToCalendar('${d.id}')">📆 ADD TO CALENDAR</button>` : ''}
       <button class="modal-btn" onclick="shareFind('${d.id}', this)">🔗 SHARE</button>
       <button class="modal-btn secondary" onclick="toggleSave('${d.id}'); this.innerHTML = savedIds.has('${d.id}') ? '★ SAVED' : '☆ SAVE WATCHLIST';">
         ${saved ? '★ SAVED WATCHLIST' : '☆ SAVE WATCHLIST'}
