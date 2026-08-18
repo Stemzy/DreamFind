@@ -830,6 +830,7 @@
     <button class="tab-btn" data-cat="thrift">✿ THRIFT &amp; VINTAGE</button>
     <button class="tab-btn" data-cat="show">♫ SHOWS &amp; CONCERTS</button>
     <button class="tab-btn" data-cat="event">✦ SURREAL EVENTS</button>
+    <button class="tab-btn" data-cat="tattoo">✜ TATTOO &amp; PIERCING</button>
   </div>
 
   <!-- ═══ Tools row (calendar / tags / sort) ═══ -->
@@ -2303,6 +2304,16 @@ const DATA = [
     links: [{label: 'Website', url: 'https://www.theendhtx.com/'}, {label: 'Instagram', url: 'https://www.instagram.com/the_end_houston/'}, {label: 'Facebook', url: 'https://www.facebook.com/TheEndHTX'}],
     tags: ['The End', 'Eastside', 'Live Music', 'Pop-Punk', 'Emo']
   },
+  {
+    id: 'inkline-tattoo-sa', cat: 'tattoo', name: 'Inkline Tattoo', city: 'San Antonio', state: 'TX', ph: '✜',
+    img: 'images/inkline.jpg',
+    desc: "Walk-in-friendly SA tattoo & piercing studio out on the 1604 loop — color, black & grey, cover-ups and American traditional, plus piercings and gauging/stretching. 4.9-star across 900+ reviews.",
+    address: '7325 N Loop 1604 W, Ste 104, San Antonio, TX 78249',
+    hours: 'Tue-Sun 11am-11pm \u00b7 Mon closed',
+    price: '$$', era: 'Tattoo & Piercing',
+    links: [{label: 'Instagram', url: 'https://www.instagram.com/inklinetattoosanantonio/'}, {label: 'Facebook', url: 'https://www.facebook.com/inklinetattoosanantonio/'}, {label: 'Yelp', url: 'https://www.yelp.com/biz/inkline-tattoo-san-antonio-san-antonio'}],
+    tags: ['Tattoo', 'Piercing', 'Cover-Ups', 'American Traditional', '1604']
+  },
 ];
 
 const grid = document.getElementById('grid');
@@ -2348,7 +2359,7 @@ const venueMenu = document.getElementById('venueMenu');
 let venuesForState = [];
 let savedIds = new Set(JSON.parse(localStorage.getItem('dreamscape_watchlist') || '[]'));
 
-const CAT_LABELS = { thrift: '✿ THRIFT & VINTAGE', show: '♫ SHOW & CONCERT', event: '✦ SURREAL EVENT' };
+const CAT_LABELS = { thrift: '✿ THRIFT & VINTAGE', show: '♫ SHOW & CONCERT', event: '✦ SURREAL EVENT', tattoo: '✜ TATTOO & PIERCING' };
 
 function updateSavedCount() {
   savedCountEl.textContent = savedIds.size;
