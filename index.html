@@ -3,6 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Google Analytics (GA4) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-1T06V44L2S"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-1T06V44L2S');
+</script>
 <title>DREAMSCAPE 📼 90s Alt-Zine Vintage & Concert Finder</title>
 <meta name="description" content="Underground 90s Y2K alt-zine finder for thrift, vintage clothing, indie shows, and surreal events.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -3058,6 +3066,7 @@ renderGuestbook();
 
 /* ═══ SUBMIT A SPOT (prefilled email) ═══ */
 document.getElementById('submitSpot').addEventListener('click', () => {
+  if (window.gtag) gtag('event', 'submit_spot');   // count submissions in GA4
   const subject = encodeURIComponent('Dreamscape Finder — new spot suggestion');
   const body = encodeURIComponent(
     'Suggest a place/show/event for Dreamscape Finder:\n\n' +
